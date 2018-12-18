@@ -35,7 +35,7 @@ class ConnectBox(object):
 
     async def async_get_devices(self):
         """Scan for new devices and return a list with found device IDs."""
-        import defusedxml.ElementTree as ET
+        import defusedxml.ElementTree as element_tree
 
         if self.token is None:
             token_initialized = await self.async_initialize_token()
@@ -46,7 +46,7 @@ class ConnectBox(object):
         raw = await self._async_ws_function(CMD_DEVICES)
 
         try:
-            xml_root = ET.fromstring(raw)
+            xml_root = element_tree.fromstring(raw)
             mac_adresses = [mac.text for mac in xml_root.iter('MACAddr')]
             hostnames = [mac.text for mac in xml_root.iter('hostname')]
             ip_addresses = [mac.text for mac in xml_root.iter('IPv4Addr')]
