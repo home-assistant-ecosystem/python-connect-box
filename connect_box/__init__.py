@@ -12,18 +12,20 @@ _LOGGER = logging.getLogger(__name__)
 
 HTTP_HEADER_X_REQUESTED_WITH = 'X-Requested-With'
 
+CMD_LOGIN = 15
 CMD_DEVICES = 123
 
 
 class ConnectBox(object):
     """A class for handling the data retrieval from an UPC Connect Box ."""
 
-    def __init__(self, loop, session, host='192.168.0.1'):
+    def __init__(self, loop, session, password, host='192.168.0.1'):
         """Initialize the connection."""
         self._loop = loop
         self._session = session
         self.token = None
         self.host = host
+        self.password = password
         self.headers = {
             HTTP_HEADER_X_REQUESTED_WITH: 'XMLHttpRequest',
             REFERER: "http://{}/index.html".format(self.host),
@@ -59,7 +61,7 @@ class ConnectBox(object):
                     'ip_address': ip_address,
                 }})
             self.data = {'devices': device_list}
-        except (ET.ParseError, TypeError):
+        except (element_tree.ParseError, TypeError):
             _LOGGER.warning("Can't read device from %s", self.host)
             self.token = None
             return []
@@ -77,10 +79,39 @@ class ConnectBox(object):
 
             self.token = response.cookies['sessionToken'].value
 
-            return True
+            if self.token is None:
+                return False
+
+            return await self._async_initialize_token_with_password(CMD_LOGIN)
 
         except (asyncio.TimeoutError, aiohttp.ClientError):
             _LOGGER.error("Can not load login page from %s", self.host)
+            return False
+
+    async def _async_initialize_token_with_password(self, function):
+        """Get token with password."""
+        try:
+            with async_timeout.timeout(10):
+                response = await self._session.post(
+                    f"http://{self.host}/xml/setter.xml",
+                    data="token={}&fun={}&Username=NULL&Password={}".format(self.token, function, self.password),
+                    headers=self.headers,
+                    allow_redirects=False,
+                )
+
+                await response.text()
+
+            if response.status != 200:
+                _LOGGER.warning("Receive http code %d", response.status)
+                self.token = None
+                return False
+
+            self.token = response.cookies["sessionToken"].value
+
+            return True
+
+        except (asyncio.TimeoutError, aiohttp.ClientError):
+            _LOGGER.error("Can not login to %s", self.host)
             return False
 
     async def _async_ws_function(self, function):
