@@ -1,10 +1,13 @@
 """A Python Client to get data from UPC Connect Boxes."""
 import asyncio
+from ipaddress import IPv4Address, IPv6Address, ip_address as convert_ip
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 import aiohttp
 from aiohttp.hdrs import REFERER, USER_AGENT
+import attr
+import defusedxml.ElementTree as element_tree
 
 from . import exceptions
 
@@ -14,6 +17,15 @@ HTTP_HEADER_X_REQUESTED_WITH = "X-Requested-With"
 
 CMD_LOGIN = 15
 CMD_DEVICES = 123
+
+
+@attr.s
+class Device:
+    """A single device."""
+
+    mac: str = attr.ib()
+    hostname: str = attr.ib(cmp=False)
+    ip: Union[IPv4Address, IPv6Address] = attr.ib(cmp=False, factory=convert_ip)
 
 
 class ConnectBox:
@@ -36,38 +48,31 @@ class ConnectBox:
                 "Chrome/47.0.2526.106 Safari/537.36"
             ),
         }
-        self.data: Optional[Dict[str, Any]] = None
+        self.devices: List[Device] = []
 
-    async def async_get_devices(self) -> List[Dict[str, str]]:
+    async def async_get_devices(self) -> List[Device]:
         """Scan for new devices and return a list with found device IDs."""
-        import defusedxml.ElementTree as element_tree
-
         if self.token is None:
-            token_initialized = await self.async_initialize_token()
-            if not token_initialized:
-                _LOGGER.error("Not connected to %s", self.host)
-                return []
+            await self.async_initialize_token()
 
         raw = await self._async_ws_function(CMD_DEVICES)
-
+        self.devices.clear()
         try:
             xml_root = element_tree.fromstring(raw)
             mac_adresses = [mac.text for mac in xml_root.iter("MACAddr")]
             hostnames = [mac.text for mac in xml_root.iter("hostname")]
             ip_addresses = [mac.text for mac in xml_root.iter("IPv4Addr")]
 
-            device_list = []
             for mac_address, hostname, ip_address in zip(
                 mac_adresses, hostnames, ip_addresses
             ):
-                device_list.append(
-                    {mac_address: {"hostname": hostname, "ip_address": ip_address}}
-                )
-            self.data = {"devices": device_list}
+                self.devices.append(Device(mac_address, hostname, ip_address))
         except (element_tree.ParseError, TypeError):
             _LOGGER.warning("Can't read device from %s", self.host)
             self.token = None
-            return []
+            raise exceptions.ConnectBoxNoDataAvailable() from None
+
+        return self.devices
 
     async def async_initialize_token(self) -> bool:
         """Get the token first."""
@@ -78,18 +83,17 @@ class ConnectBox:
                 headers=self.headers,
                 timeout=10,
             ) as response:
-
                 await response.text()
 
-            self.token = response.cookies["sessionToken"].value
-            if self.token is None:
-                return False
-
-            return await self._async_initialize_token_with_password(CMD_LOGIN)
+                self.token = response.cookies["sessionToken"].value
+                if self.token is None:
+                    return False
 
         except (asyncio.TimeoutError, aiohttp.ClientError):
             _LOGGER.error("Can not load login page from %s", self.host)
             return False
+
+        return await self._async_initialize_token_with_password(CMD_LOGIN)
 
     async def _async_initialize_token_with_password(self, function: int) -> bool:
         """Get token with password."""
@@ -133,7 +137,7 @@ class ConnectBox:
                 if response.status != 200:
                     _LOGGER.warning("Receive http code %d", response.status)
                     self.token = None
-                    return
+                    raise exceptions.ConnectBoxError()
 
                 # Load data, store token for next request
                 self.token = response.cookies["sessionToken"].value
@@ -143,4 +147,4 @@ class ConnectBox:
             _LOGGER.error("Error on %s", function)
             self.token = None
 
-        return None
+        raise exceptions.ConnectBoxConnectionError()
