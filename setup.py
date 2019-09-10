@@ -13,13 +13,10 @@ here = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(here, "README.rst"), encoding="utf-8") as readme:
     long_description = readme.read()
 
-if sys.argv[-1] == "publish":
-    os.system("python3 setup.py sdist upload")
-    sys.exit()
 
 setup(
     name="connect_box",
-    version="0.1.0",
+    version="0.2.0",
     description="Python client for interacting with Compal CH7465LG devices.",
     long_description=long_description,
     long_description_content_type="text/x-rst",
