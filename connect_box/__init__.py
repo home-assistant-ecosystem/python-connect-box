@@ -76,7 +76,7 @@ class ConnectBox:
 
         return self.devices
 
-    async def async_initialize_token(self) -> bool:
+    async def async_initialize_token(self) -> None:
         """Get the token first."""
         try:
             # Get first the token
@@ -92,9 +92,9 @@ class ConnectBox:
             _LOGGER.error("Can not load login page from %s", self.host)
             raise exceptions.ConnectBoxConnectionError()
 
-        return await self._async_initialize_token_with_password(CMD_LOGIN)
+        await self._async_initialize_token_with_password(CMD_LOGIN)
 
-    async def _async_initialize_token_with_password(self, function: int) -> bool:
+    async def _async_initialize_token_with_password(self, function: int) -> None:
         """Get token with password."""
         try:
             async with await self._session.post(
