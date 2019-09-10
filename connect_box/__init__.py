@@ -86,14 +86,11 @@ class ConnectBox:
                 timeout=10,
             ) as response:
                 await response.text()
-
                 self.token = response.cookies["sessionToken"].value
-                if self.token is None:
-                    return False
 
         except (asyncio.TimeoutError, aiohttp.ClientError):
             _LOGGER.error("Can not load login page from %s", self.host)
-            return False
+            raise exceptions.ConnectBoxConnectionError()
 
         return await self._async_initialize_token_with_password(CMD_LOGIN)
 
@@ -110,17 +107,16 @@ class ConnectBox:
 
                 await response.text()
 
-            if response.status != 200:
-                _LOGGER.warning("Receive http code %d", response.status)
-                self.token = None
-                return False
+                if response.status != 200:
+                    _LOGGER.warning("Receive http code %d", response.status)
+                    self.token = None
+                    raise exceptions.ConnectBoxLoginError()
 
-            self.token = response.cookies["sessionToken"].value
-            return True
+                self.token = response.cookies["sessionToken"].value
 
         except (asyncio.TimeoutError, aiohttp.ClientError):
             _LOGGER.error("Can not login to %s", self.host)
-            return False
+            raise exceptions.ConnectBoxConnectionError()
 
     async def _async_ws_function(self, function: int) -> Optional[str]:
         """Execute a command on UPC firmware webservice."""
