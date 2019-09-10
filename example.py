@@ -9,7 +9,7 @@ from connect_box import ConnectBox
 async def main():
     """Sample code to retrieve the data from an UPC Connect Box."""
     async with aiohttp.ClientSession() as session:
-        client = ConnectBox(loop, session)
+        client = ConnectBox(loop, session, "password")
 
         # Print details about the connected devices
         await client.async_get_devices()
