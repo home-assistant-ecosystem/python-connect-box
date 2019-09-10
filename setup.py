@@ -16,7 +16,7 @@ with open(os.path.join(here, "README.rst"), encoding="utf-8") as readme:
 
 setup(
     name="connect_box",
-    version="0.2.1",
+    version="0.2.2",
     description="Python client for interacting with Compal CH7465LG devices.",
     long_description=long_description,
     long_description_content_type="text/x-rst",
