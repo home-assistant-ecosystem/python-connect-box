@@ -76,7 +76,7 @@ class ConnectBox:
 
         return self.devices
 
-    async def async_initialize_token(self) -> bool:
+    async def async_initialize_token(self) -> None:
         """Get the token first."""
         try:
             # Get first the token
@@ -86,18 +86,15 @@ class ConnectBox:
                 timeout=10,
             ) as response:
                 await response.text()
-
                 self.token = response.cookies["sessionToken"].value
-                if self.token is None:
-                    return False
 
         except (asyncio.TimeoutError, aiohttp.ClientError):
             _LOGGER.error("Can not load login page from %s", self.host)
-            return False
+            raise exceptions.ConnectBoxConnectionError()
 
-        return await self._async_initialize_token_with_password(CMD_LOGIN)
+        await self._async_initialize_token_with_password(CMD_LOGIN)
 
-    async def _async_initialize_token_with_password(self, function: int) -> bool:
+    async def _async_initialize_token_with_password(self, function: int) -> None:
         """Get token with password."""
         try:
             async with await self._session.post(
@@ -110,17 +107,16 @@ class ConnectBox:
 
                 await response.text()
 
-            if response.status != 200:
-                _LOGGER.warning("Receive http code %d", response.status)
-                self.token = None
-                return False
+                if response.status != 200:
+                    _LOGGER.warning("Receive http code %d", response.status)
+                    self.token = None
+                    raise exceptions.ConnectBoxLoginError()
 
-            self.token = response.cookies["sessionToken"].value
-            return True
+                self.token = response.cookies["sessionToken"].value
 
         except (asyncio.TimeoutError, aiohttp.ClientError):
             _LOGGER.error("Can not login to %s", self.host)
-            return False
+            raise exceptions.ConnectBoxConnectionError()
 
     async def _async_ws_function(self, function: int) -> Optional[str]:
         """Execute a command on UPC firmware webservice."""

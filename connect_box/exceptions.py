@@ -11,3 +11,7 @@ class ConnectBoxConnectionError(ConnectBoxError):
 
 class ConnectBoxNoDataAvailable(ConnectBoxError):
     """When no data is available."""
+
+
+class ConnectBoxLoginError(ConnectBoxError):
+    """When login fails."""
