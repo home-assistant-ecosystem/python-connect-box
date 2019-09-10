@@ -25,7 +25,7 @@ class Device:
 
     mac: str = attr.ib()
     hostname: str = attr.ib(cmp=False)
-    ip: Union[IPv4Address, IPv6Address] = attr.ib(cmp=False, factory=convert_ip)
+    ip: Union[IPv4Address, IPv6Address] = attr.ib(cmp=False, convert=convert_ip)
 
 
 class ConnectBox:
