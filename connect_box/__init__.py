@@ -59,14 +59,16 @@ class ConnectBox:
         self.devices.clear()
         try:
             xml_root = element_tree.fromstring(raw)
-            mac_adresses = [mac.text for mac in xml_root.iter("MACAddr")]
-            hostnames = [mac.text for mac in xml_root.iter("hostname")]
-            ip_addresses = [mac.text for mac in xml_root.iter("IPv4Addr")]
+            mac_adresses: List[str] = [mac.text for mac in xml_root.iter("MACAddr")]
+            hostnames: List[str] = [mac.text for mac in xml_root.iter("hostname")]
+            ip_addresses: List[str] = [mac.text for mac in xml_root.iter("IPv4Addr")]
 
             for mac_address, hostname, ip_address in zip(
                 mac_adresses, hostnames, ip_addresses
             ):
-                self.devices.append(Device(mac_address, hostname, ip_address))
+                self.devices.append(
+                    Device(mac_address, hostname, ip_address.partition("/")[0])
+                )
         except (element_tree.ParseError, TypeError):
             _LOGGER.warning("Can't read device from %s", self.host)
             self.token = None
