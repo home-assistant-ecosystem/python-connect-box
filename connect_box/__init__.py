@@ -20,6 +20,7 @@ CMD_DEVICES = 123
 CMD_DOWNSTREAM = 10
 CMD_UPSTREAM = 11
 
+
 @attr.s
 class Device:
     """A single device."""
@@ -27,6 +28,7 @@ class Device:
     mac: str = attr.ib()
     hostname: str = attr.ib(cmp=False)
     ip: Union[IPv4Address, IPv6Address] = attr.ib(cmp=False, factory=convert_ip)
+
 
 @attr.s
 class DownstreamChannel:
@@ -42,6 +44,7 @@ class DownstreamChannel:
     qamLocked: bool = attr.ib()
     fecLocked: bool = attr.ib()
     mpegLocked: bool = attr.ib()
+
 
 @attr.s
 class UpstreamChannel:
@@ -59,6 +62,7 @@ class UpstreamChannel:
     t4Timeouts: int = attr.ib()
     channelType: str = attr.ib()
     messageType: int = attr.ib()
+
 
 class ConnectBox:
     """A class for handling the data retrieval from an UPC Connect Box ."""
@@ -119,19 +123,21 @@ class ConnectBox:
         try:
             xml_root = element_tree.fromstring(raw)
             self.ds_channels.clear()
-            for ds in xml_root.iter('downstream'):
-                self.ds_channels.append(DownstreamChannel(
-                    int(ds.find('freq').text),
-                    int(ds.find('pow').text),
-                    ds.find('mod').text,
-                    ds.find('chid').text,
-                    float(ds.find('RxMER').text),
-                    int(ds.find('PreRs').text),
-                    int(ds.find('PostRs').text),
-                    ds.find('IsQamLocked').text == '1',
-                    ds.find('IsFECLocked').text == '1',
-                    ds.find('IsMpegLocked').text == '1'
-                ))
+            for downstream in xml_root.iter("downstream"):
+                self.ds_channels.append(
+                    DownstreamChannel(
+                        int(downstream.find("freq").text),
+                        int(downstream.find("pow").text),
+                        downstream.find("mod").text,
+                        downstream.find("chid").text,
+                        float(downstream.find("RxMER").text),
+                        int(downstream.find("PreRs").text),
+                        int(downstream.find("PostRs").text),
+                        downstream.find("IsQamLocked").text == "1",
+                        downstream.find("IsFECLocked").text == "1",
+                        downstream.find("IsMpegLocked").text == "1",
+                    )
+                )
         except (element_tree.ParseError, TypeError):
             _LOGGER.warning("Can't read downstream channels from %s", self.host)
             self.token = None
@@ -148,21 +154,23 @@ class ConnectBox:
         try:
             xml_root = element_tree.fromstring(raw)
             self.us_channels.clear()
-            for us in xml_root.iter('upstream'):
-                self.us_channels.append(UpstreamChannel(
-                    int(us.find('freq').text),
-                    int(us.find('power').text),
-                    us.find('srate').text,
-                    us.find('usid').text,
-                    us.find('mod').text,
-                    us.find('ustype').text,
-                    int(us.find('t1Timeouts').text),
-                    int(us.find('t2Timeouts').text),
-                    int(us.find('t3Timeouts').text),
-                    int(us.find('t4Timeouts').text),
-                    us.find('channeltype').text,
-                    int(us.find('messageType').text),
-                ))
+            for upstream in xml_root.iter("upstream"):
+                self.us_channels.append(
+                    UpstreamChannel(
+                        int(upstream.find("freq").text),
+                        int(upstream.find("power").text),
+                        upstream.find("srate").text,
+                        upstream.find("usid").text,
+                        upstream.find("mod").text,
+                        upstream.find("ustype").text,
+                        int(upstream.find("t1Timeouts").text),
+                        int(upstream.find("t2Timeouts").text),
+                        int(upstream.find("t3Timeouts").text),
+                        int(upstream.find("t4Timeouts").text),
+                        upstream.find("channeltype").text,
+                        int(upstream.find("messageType").text),
+                    )
+                )
         except (element_tree.ParseError, TypeError):
             _LOGGER.warning("Can't read upstream channels from %s", self.host)
             self.token = None
