@@ -1,6 +1,6 @@
 // See https://aka.ms/vscode-remote/devcontainer.json for format details.
 {
-  "name": "PyDroid IPCam dev",
+  "name": "Connect-Box dev",
   "context": "..",
   "dockerFile": "Dockerfile",
   "postCreateCommand": "pip3 install -e .",

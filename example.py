@@ -15,6 +15,8 @@ async def main():
         await client.async_get_devices()
         print(client.devices)
 
+        await client.async_logout()
+
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())

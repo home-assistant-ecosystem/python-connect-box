@@ -16,6 +16,7 @@ _LOGGER = logging.getLogger(__name__)
 HTTP_HEADER_X_REQUESTED_WITH = "X-Requested-With"
 
 CMD_LOGIN = 15
+CMD_LOGOUT = 16
 CMD_DEVICES = 123
 
 
@@ -75,6 +76,13 @@ class ConnectBox:
             raise exceptions.ConnectBoxNoDataAvailable() from None
 
         return self.devices
+
+    async def async_logout(self) -> None:
+        """Logout and close session."""
+        if not self.token:
+            return
+
+        await self._async_ws_function(CMD_LOGOUT)
 
     async def async_initialize_token(self) -> None:
         """Get the token first."""
