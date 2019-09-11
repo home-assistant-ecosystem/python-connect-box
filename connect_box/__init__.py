@@ -77,12 +77,13 @@ class ConnectBox:
 
         return self.devices
 
-    async def async_logout(self) -> None:
+    async def async_close_session(self) -> None:
         """Logout and close session."""
         if not self.token:
             return
 
         await self._async_ws_function(CMD_LOGOUT)
+        self.token = None
 
     async def async_initialize_token(self) -> None:
         """Get the token first."""
