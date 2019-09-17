@@ -18,6 +18,8 @@ HTTP_HEADER_X_REQUESTED_WITH = "X-Requested-With"
 CMD_LOGIN = 15
 CMD_LOGOUT = 16
 CMD_DEVICES = 123
+CMD_DOWNSTREAM = 10
+CMD_UPSTREAM = 11
 
 
 @attr.s
@@ -27,6 +29,40 @@ class Device:
     mac: str = attr.ib()
     hostname: str = attr.ib(cmp=False)
     ip: Union[IPv4Address, IPv6Address] = attr.ib(cmp=False, convert=convert_ip)
+
+
+@attr.s
+class DownstreamChannel:
+    """A locked downstream channel."""
+
+    frequency: int = attr.ib()
+    powerLevel: int = attr.ib()
+    modulation: str = attr.ib()
+    id: str = attr.ib()
+    snr: float = attr.ib()
+    preRs: int = attr.ib()
+    postRs: int = attr.ib()
+    qamLocked: bool = attr.ib()
+    fecLocked: bool = attr.ib()
+    mpegLocked: bool = attr.ib()
+
+
+@attr.s
+class UpstreamChannel:
+    """A locked upstream channel."""
+
+    frequency: int = attr.ib()
+    powerLevel: int = attr.ib()
+    symbolRate: str = attr.ib()
+    id: str = attr.ib()
+    modulation: str = attr.ib()
+    type: str = attr.ib()
+    t1Timeouts: int = attr.ib()
+    t2Timeouts: int = attr.ib()
+    t3Timeouts: int = attr.ib()
+    t4Timeouts: int = attr.ib()
+    channelType: str = attr.ib()
+    messageType: int = attr.ib()
 
 
 class ConnectBox:
@@ -50,6 +86,8 @@ class ConnectBox:
             ),
         }
         self.devices: List[Device] = []
+        self.ds_channels: List[DownstreamChannel] = []
+        self.us_channels: List[UpstreamChannel] = []
 
     async def async_get_devices(self) -> List[Device]:
         """Scan for new devices and return a list with found device IDs."""
@@ -75,7 +113,69 @@ class ConnectBox:
             self.token = None
             raise exceptions.ConnectBoxNoDataAvailable() from None
 
-        return self.devices
+    async def async_get_downstream(self):
+        """Get the current downstream cable modem state."""
+
+        if self.token is None:
+            await self.async_initialize_token()
+
+        raw = await self._async_ws_function(CMD_DOWNSTREAM)
+
+        try:
+            xml_root = element_tree.fromstring(raw)
+            self.ds_channels.clear()
+            for downstream in xml_root.iter("downstream"):
+                self.ds_channels.append(
+                    DownstreamChannel(
+                        int(downstream.find("freq").text),
+                        int(downstream.find("pow").text),
+                        downstream.find("mod").text,
+                        downstream.find("chid").text,
+                        float(downstream.find("RxMER").text),
+                        int(downstream.find("PreRs").text),
+                        int(downstream.find("PostRs").text),
+                        downstream.find("IsQamLocked").text == "1",
+                        downstream.find("IsFECLocked").text == "1",
+                        downstream.find("IsMpegLocked").text == "1",
+                    )
+                )
+        except (element_tree.ParseError, TypeError):
+            _LOGGER.warning("Can't read downstream channels from %s", self.host)
+            self.token = None
+            raise exceptions.ConnectBoxNoDataAvailable() from None
+
+    async def async_get_upstream(self):
+        """Get the current upstream cable modem state."""
+
+        if self.token is None:
+            await self.async_initialize_token()
+
+        raw = await self._async_ws_function(CMD_UPSTREAM)
+
+        try:
+            xml_root = element_tree.fromstring(raw)
+            self.us_channels.clear()
+            for upstream in xml_root.iter("upstream"):
+                self.us_channels.append(
+                    UpstreamChannel(
+                        int(upstream.find("freq").text),
+                        int(upstream.find("power").text),
+                        upstream.find("srate").text,
+                        upstream.find("usid").text,
+                        upstream.find("mod").text,
+                        upstream.find("ustype").text,
+                        int(upstream.find("t1Timeouts").text),
+                        int(upstream.find("t2Timeouts").text),
+                        int(upstream.find("t3Timeouts").text),
+                        int(upstream.find("t4Timeouts").text),
+                        upstream.find("channeltype").text,
+                        int(upstream.find("messageType").text),
+                    )
+                )
+        except (element_tree.ParseError, TypeError):
+            _LOGGER.warning("Can't read upstream channels from %s", self.host)
+            self.token = None
+            raise exceptions.ConnectBoxNoDataAvailable() from None
 
     async def async_close_session(self) -> None:
         """Logout and close session."""
