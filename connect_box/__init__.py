@@ -1,14 +1,13 @@
 """A Python Client to get data from UPC Connect Boxes."""
 import asyncio
-from ipaddress import IPv4Address, IPv6Address, ip_address as convert_ip
 import logging
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional
 
 import aiohttp
 from aiohttp.hdrs import REFERER, USER_AGENT
-import attr
 import defusedxml.ElementTree as element_tree
 
+from .data import Device, DownstreamChannel, UpstreamChannel
 from . import exceptions
 
 _LOGGER = logging.getLogger(__name__)
@@ -20,49 +19,6 @@ CMD_LOGOUT = 16
 CMD_DEVICES = 123
 CMD_DOWNSTREAM = 10
 CMD_UPSTREAM = 11
-
-
-@attr.s
-class Device:
-    """A single device."""
-
-    mac: str = attr.ib()
-    hostname: str = attr.ib(cmp=False)
-    ip: Union[IPv4Address, IPv6Address] = attr.ib(cmp=False, convert=convert_ip)
-
-
-@attr.s
-class DownstreamChannel:
-    """A locked downstream channel."""
-
-    frequency: int = attr.ib()
-    powerLevel: int = attr.ib()
-    modulation: str = attr.ib()
-    id: str = attr.ib()
-    snr: float = attr.ib()
-    preRs: int = attr.ib()
-    postRs: int = attr.ib()
-    qamLocked: bool = attr.ib()
-    fecLocked: bool = attr.ib()
-    mpegLocked: bool = attr.ib()
-
-
-@attr.s
-class UpstreamChannel:
-    """A locked upstream channel."""
-
-    frequency: int = attr.ib()
-    powerLevel: int = attr.ib()
-    symbolRate: str = attr.ib()
-    id: str = attr.ib()
-    modulation: str = attr.ib()
-    type: str = attr.ib()
-    t1Timeouts: int = attr.ib()
-    t2Timeouts: int = attr.ib()
-    t3Timeouts: int = attr.ib()
-    t4Timeouts: int = attr.ib()
-    channelType: str = attr.ib()
-    messageType: int = attr.ib()
 
 
 class ConnectBox:
@@ -197,8 +153,8 @@ class ConnectBox:
                 await response.text()
                 self.token = response.cookies["sessionToken"].value
 
-        except (asyncio.TimeoutError, aiohttp.ClientError):
-            _LOGGER.error("Can not load login page from %s", self.host)
+        except (asyncio.TimeoutError, aiohttp.ClientError) as err:
+            _LOGGER.error("Can not load login page from %s: %s", self.host, err)
             raise exceptions.ConnectBoxConnectionError()
 
         await self._async_initialize_token_with_password(CMD_LOGIN)
@@ -213,18 +169,16 @@ class ConnectBox:
                 allow_redirects=False,
                 timeout=10,
             ) as response:
-
                 await response.text()
 
                 if response.status != 200:
-                    _LOGGER.warning("Receive http code %d", response.status)
+                    _LOGGER.warning("Login error with code %d", response.status)
                     self.token = None
                     raise exceptions.ConnectBoxLoginError()
-
                 self.token = response.cookies["sessionToken"].value
 
-        except (asyncio.TimeoutError, aiohttp.ClientError):
-            _LOGGER.error("Can not login to %s", self.host)
+        except (asyncio.TimeoutError, aiohttp.ClientError) as err:
+            _LOGGER.error("Can not login to %s: %s", self.host, err)
             raise exceptions.ConnectBoxConnectionError()
 
     async def _async_ws_function(self, function: int) -> Optional[str]:
@@ -242,7 +196,7 @@ class ConnectBox:
 
                 # If there is an error
                 if response.status != 200:
-                    _LOGGER.warning("Receive http code %d", response.status)
+                    _LOGGER.debug("Receive http code %d", response.status)
                     self.token = None
                     raise exceptions.ConnectBoxError()
 
@@ -250,8 +204,8 @@ class ConnectBox:
                 self.token = response.cookies["sessionToken"].value
                 return await response.text()
 
-        except (asyncio.TimeoutError, aiohttp.ClientError):
-            _LOGGER.error("Error on %s", function)
+        except (asyncio.TimeoutError, aiohttp.ClientError) as err:
+            _LOGGER.error("Error received on %s: %s", function, err)
             self.token = None
 
         raise exceptions.ConnectBoxConnectionError()
