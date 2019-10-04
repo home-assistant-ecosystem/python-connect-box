@@ -50,8 +50,8 @@ class ConnectBox:
         if self.token is None:
             await self.async_initialize_token()
 
-        raw = await self._async_ws_function(CMD_DEVICES)
         self.devices.clear()
+        raw = await self._async_ws_function(CMD_DEVICES)
         try:
             xml_root = element_tree.fromstring(raw)
             mac_adresses: List[str] = [mac.text for mac in xml_root.iter("MACAddr")]
@@ -71,15 +71,14 @@ class ConnectBox:
 
     async def async_get_downstream(self):
         """Get the current downstream cable modem state."""
-
         if self.token is None:
             await self.async_initialize_token()
 
+        self.ds_channels.clear()
         raw = await self._async_ws_function(CMD_DOWNSTREAM)
 
         try:
             xml_root = element_tree.fromstring(raw)
-            self.ds_channels.clear()
             for downstream in xml_root.iter("downstream"):
                 self.ds_channels.append(
                     DownstreamChannel(
@@ -102,15 +101,14 @@ class ConnectBox:
 
     async def async_get_upstream(self):
         """Get the current upstream cable modem state."""
-
         if self.token is None:
             await self.async_initialize_token()
 
+        self.us_channels.clear()
         raw = await self._async_ws_function(CMD_UPSTREAM)
 
         try:
             xml_root = element_tree.fromstring(raw)
-            self.us_channels.clear()
             for upstream in xml_root.iter("upstream"):
                 self.us_channels.append(
                     UpstreamChannel(
