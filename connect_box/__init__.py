@@ -52,6 +52,7 @@ class ConnectBox:
 
         self.devices.clear()
         raw = await self._async_ws_function(CMD_DEVICES)
+
         try:
             xml_root = element_tree.fromstring(raw)
             mac_adresses: List[str] = [mac.text for mac in xml_root.iter("MACAddr")]
