@@ -195,7 +195,7 @@ class ConnectBox:
 
                 # If there is an error
                 if response.status != 200:
-                    _LOGGER.debug("Receive http code %d", response.status)
+                    _LOGGER.debug("Receive HTTP code %d", response.status)
                     self.token = None
                     raise exceptions.ConnectBoxError()
 
