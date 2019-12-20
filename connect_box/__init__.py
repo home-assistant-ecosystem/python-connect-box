@@ -22,7 +22,7 @@ CMD_UPSTREAM = 11
 
 
 class ConnectBox:
-    """A class for handling the data retrieval from an UPC Connect Box ."""
+    """A class for handling the data retrieval from an UPC Connect Box."""
 
     def __init__(
         self, session: aiohttp.ClientSession, password: str, host: str = "192.168.0.1"
