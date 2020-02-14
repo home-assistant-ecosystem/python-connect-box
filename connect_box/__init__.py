@@ -151,7 +151,7 @@ class ConnectBox:
         raw = await self._async_ws_get_function(CMD_GET_IPV6_FILTER_RULE)
 
         try:
-            xml_root = element_tree.fromstring(raw)    
+            xml_root = element_tree.fromstring(raw)
             for instance in xml_root.iter("instance"):
                 self.ipv6_filters.append(
                     Ipv6FilterInstance(
@@ -175,7 +175,7 @@ class ConnectBox:
                 _parse_general_time(xml_root),
                 _parse_daily_time(xml_root)
             )
-    
+
         except (element_tree.ParseError, TypeError):
             _LOGGER.warning("Can't read IPv6 filter rules from %s", self.host)
             self.token = None
@@ -194,7 +194,7 @@ class ConnectBox:
         val_enabled = '*'.join([str(fs.enabled) for fs in filter_states.entries])
         val_del = '*'.join(['0' for fs in filter_states.entries])
         val_idd = '*'.join([str(fs.idd) for fs in filter_states.entries])
-    
+
         params = OrderedDict()
         params['act'] = 1
         params['dir'] = 0
@@ -215,9 +215,9 @@ class ConnectBox:
         params['dsIpRange'] = ''
         params['PortRange'] = ''
         params['TMode'] = self._ipv6_filters_time.TMode
-        if self._ipv6_filters_time.TMode == 1: 
+        if self._ipv6_filters_time.TMode == 1:
             params['TRule'] = self._ipv6_filters_time.XmlGeneralTime
-        elif self._ipv6_filters_time.TMode == 2: 
+        elif self._ipv6_filters_time.TMode == 2:
             params['TRule'] = self._ipv6_filters_time.XmlDailyTime
         else:
             params['TRule'] = 0
@@ -231,7 +231,7 @@ class ConnectBox:
 
         for st in states.entries:
             if st.idd == idd:
-                st.enabled = int(not(bool(st.enabled)))
+                st.enabled = int(not bool(st.enabled))
                 new_value = bool(st.enabled)
                 break
         if new_value is not None:
@@ -328,7 +328,7 @@ class ConnectBox:
         try:
             # The 'token' parameter has to be first, and 'fun' second
             # or the UPC firmware will return an error
-            params_str = ''.join([f'&{key}={value}' for (key,value) in params.items()])
+            params_str = ''.join([f'&{key}={value}' for (key, value) in params.items()])
 
             async with await self._session.post(
                 f"http://{self.host}/xml/setter.xml",
