@@ -2,13 +2,18 @@
 import asyncio
 import logging
 from typing import Dict, List, Optional
+from collections import OrderedDict
 
+import attr
 import aiohttp
 from aiohttp.hdrs import REFERER, USER_AGENT
 import defusedxml.ElementTree as element_tree
 
-from .data import Device, DownstreamChannel, UpstreamChannel
+from .data import Device, DownstreamChannel, UpstreamChannel, \
+    Ipv6FilterInstance, FilterState, FilterStatesList, FiltersTimeMode
+from .parsers import _parse_general_time, _parse_daily_time
 from . import exceptions
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -19,6 +24,8 @@ CMD_LOGOUT = 16
 CMD_DEVICES = 123
 CMD_DOWNSTREAM = 10
 CMD_UPSTREAM = 11
+CMD_GET_IPV6_FILTER_RULE = 111
+CMD_SET_IPV6_FILTER_RULE = 112
 
 
 class ConnectBox:
@@ -44,6 +51,8 @@ class ConnectBox:
         self.devices: List[Device] = []
         self.ds_channels: List[DownstreamChannel] = []
         self.us_channels: List[UpstreamChannel] = []
+        self.ipv6_filters: List[Ipv6FilterInstance] = []
+        self._ipv6_filters_time: FiltersTimeMode = None
 
     async def async_get_devices(self) -> List[Device]:
         """Scan for new devices and return a list with found device IDs."""
@@ -51,7 +60,7 @@ class ConnectBox:
             await self.async_initialize_token()
 
         self.devices.clear()
-        raw = await self._async_ws_function(CMD_DEVICES)
+        raw = await self._async_ws_get_function(CMD_DEVICES)
 
         try:
             xml_root = element_tree.fromstring(raw)
@@ -76,7 +85,7 @@ class ConnectBox:
             await self.async_initialize_token()
 
         self.ds_channels.clear()
-        raw = await self._async_ws_function(CMD_DOWNSTREAM)
+        raw = await self._async_ws_get_function(CMD_DOWNSTREAM)
 
         try:
             xml_root = element_tree.fromstring(raw)
@@ -106,7 +115,7 @@ class ConnectBox:
             await self.async_initialize_token()
 
         self.us_channels.clear()
-        raw = await self._async_ws_function(CMD_UPSTREAM)
+        raw = await self._async_ws_get_function(CMD_UPSTREAM)
 
         try:
             xml_root = element_tree.fromstring(raw)
@@ -132,12 +141,112 @@ class ConnectBox:
             self.token = None
             raise exceptions.ConnectBoxNoDataAvailable() from None
 
+    async def async_get_ipv6_filtering(self) -> None:
+        """Get the current ipv6 filter (and filters time) rules."""
+        if self.token is None:
+            await self.async_initialize_token()
+
+        self.ipv6_filters.clear()
+        self._ipv6_filters_time = None
+        raw = await self._async_ws_get_function(CMD_GET_IPV6_FILTER_RULE)
+
+        try:
+            xml_root = element_tree.fromstring(raw)    
+            for instance in xml_root.iter("instance"):
+                self.ipv6_filters.append(
+                    Ipv6FilterInstance(
+                        int(instance.find("idd").text),
+                        instance.find("src_addr").text,
+                        int(instance.find("src_prefix").text),
+                        instance.find("dst_addr").text,
+                        int(instance.find("dst_prefix").text),
+                        int(instance.find("src_sport").text),
+                        int(instance.find("src_eport").text),
+                        int(instance.find("dst_sport").text),
+                        int(instance.find("dst_eport").text),
+                        int(instance.find("protocol").text),
+                        int(instance.find("allow").text),
+                        int(instance.find("enabled").text),
+                    )
+                )
+
+            self._ipv6_filters_time = FiltersTimeMode(
+                int(xml_root.find("time_mode").text),
+                _parse_general_time(xml_root),
+                _parse_daily_time(xml_root)
+            )
+    
+        except (element_tree.ParseError, TypeError):
+            _LOGGER.warning("Can't read IPv6 filter rules from %s", self.host)
+            self.token = None
+            raise exceptions.ConnectBoxNoDataAvailable() from None
+
+    async def _async_get_ipv6_filter_states(self) -> FilterStatesList:
+        """Get enable/disable states of IPv6 filter instances"""
+        await self.async_get_ipv6_filtering()
+        return FilterStatesList(list(FilterState(filter_instance.idd, filter_instance.enabled) for filter_instance in self.ipv6_filters))
+
+    async def _async_update_ipv6_filter_states(self, filter_states: FilterStatesList):
+        """Update enable/disable states of IPv6 filters while not affecting any other setting"""
+        if self.token is None:
+            await self.async_initialize_token()
+
+        val_enabled = '*'.join([str(fs.enabled) for fs in filter_states.entries])
+        val_del = '*'.join(['0' for fs in filter_states.entries])
+        val_idd = '*'.join([str(fs.idd) for fs in filter_states.entries])
+    
+        params = OrderedDict()
+        params['act'] = 1
+        params['dir'] = 0
+        params['enabled'] = val_enabled
+        params['allow_traffic'] = ''
+        params['protocol'] = ''
+        params['src_addr'] = ''
+        params['src_prefix'] = ''
+        params['dst_addr'] = ''
+        params['dst_prefix'] = ''
+        params['ssport'] = ''
+        params['seport'] = ''
+        params['dsport'] = ''
+        params['deport'] = ''
+        params['del'] = val_del
+        params['idd'] = val_idd
+        params['sIpRange'] = ''
+        params['dsIpRange'] = ''
+        params['PortRange'] = ''
+        params['TMode'] = self._ipv6_filters_time.TMode
+        if self._ipv6_filters_time.TMode == 1: 
+            params['TRule'] = self._ipv6_filters_time.XmlGeneralTime
+        elif self._ipv6_filters_time.TMode == 2: 
+            params['TRule'] = self._ipv6_filters_time.XmlDailyTime
+        else:
+            params['TRule'] = 0
+
+        await self._async_ws_set_function(CMD_SET_IPV6_FILTER_RULE, params)
+
+    async def async_toggle_ipv6_filter(self, idd: int) -> Optional[bool]:
+        """Toggle enable/disable of the filter with a given idd."""
+        states = await self._async_get_ipv6_filter_states()
+        new_value = None
+
+        for st in states.entries:
+            if st.idd == idd:
+                st.enabled = int(not(bool(st.enabled)))
+                new_value = bool(st.enabled)
+                break
+        if new_value is not None:
+            await self._async_update_ipv6_filter_states(states)
+            return new_value
+
+        _LOGGER.warning("Filter %d not found", idd)
+        return None
+
     async def async_close_session(self) -> None:
         """Logout and close session."""
         if not self.token:
             return
 
-        await self._async_ws_function(CMD_LOGOUT)
+        await self._async_ws_get_function(CMD_LOGOUT)
         self.token = None
 
     async def async_initialize_token(self) -> None:
@@ -180,7 +289,7 @@ class ConnectBox:
             _LOGGER.error("Can not login to %s: %s", self.host, err)
             raise exceptions.ConnectBoxConnectionError()
 
-    async def _async_ws_function(self, function: int) -> Optional[str]:
+    async def _async_ws_get_function(self, function: int) -> Optional[str]:
         """Execute a command on UPC firmware webservice."""
         try:
             # The 'token' parameter has to be first, and 'fun' second
@@ -202,6 +311,46 @@ class ConnectBox:
                 # Load data, store token for next request
                 self.token = response.cookies["sessionToken"].value
                 return await response.text()
+
+        except (asyncio.TimeoutError, aiohttp.ClientError) as err:
+            _LOGGER.error("Error received on %s: %s", function, err)
+            self.token = None
+
+        raise exceptions.ConnectBoxConnectionError()
+
+    async def _async_ws_set_function(self, function: int, params: dict) -> Optional[bool]:
+        """Execute a set command on UPC firmware webservice.
+
+        Args:
+            function(int): set function id
+            params(dict): key/value pairs to be passed to the function
+        """
+        try:
+            # The 'token' parameter has to be first, and 'fun' second
+            # or the UPC firmware will return an error
+            params_str = ''.join([f'&{key}={value}' for (key,value) in params.items()])
+
+            async with await self._session.post(
+                f"http://{self.host}/xml/setter.xml",
+                data=f"token={self.token}&fun={function}{params_str}",
+                #data=params,
+                headers=self.headers,
+                allow_redirects=False,
+                timeout=10,
+            ) as response:
+
+                # If there is an error
+                if response.status != 200:
+                    _LOGGER.debug("Receive HTTP code %d", response.status)
+                    self.token = None
+                    print(response.status)
+                    print(response.content)
+                    raise exceptions.ConnectBoxError()
+
+                # Load data, store token for next request
+                self.token = response.cookies["sessionToken"].value
+                await response.text()
+                return True
 
         except (asyncio.TimeoutError, aiohttp.ClientError) as err:
             _LOGGER.error("Error received on %s: %s", function, err)
