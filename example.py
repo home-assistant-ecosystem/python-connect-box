@@ -24,6 +24,12 @@ async def main():
         await client.async_get_devices()
         pprint(client.devices)
 
+        # Print details on general device status
+        await client.async_get_cmstatus_and_service_flows()
+        pprint(client.cmstatus)
+        pprint(client.downstream_service_flows)
+        pprint(client.upstream_service_flows)
+
         await client.async_close_session()
 
 

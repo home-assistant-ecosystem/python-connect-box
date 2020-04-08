@@ -7,7 +7,7 @@ import aiohttp
 from aiohttp.hdrs import REFERER, USER_AGENT
 import defusedxml.ElementTree as element_tree
 
-from .data import Device, DownstreamChannel, UpstreamChannel
+from .data import Device, DownstreamChannel, UpstreamChannel, CmStatus, ServiceFlow
 from . import exceptions
 
 _LOGGER = logging.getLogger(__name__)
@@ -19,6 +19,7 @@ CMD_LOGOUT = 16
 CMD_DEVICES = 123
 CMD_DOWNSTREAM = 10
 CMD_UPSTREAM = 11
+CMD_CMSTATUS = 144
 
 
 class ConnectBox:
@@ -44,8 +45,11 @@ class ConnectBox:
         self.devices: List[Device] = []
         self.ds_channels: List[DownstreamChannel] = []
         self.us_channels: List[UpstreamChannel] = []
+        self.cmstatus: Optional[CmStatus] = None
+        self.upstream_service_flows: List[ServiceFlow] = []
+        self.downstream_service_flows: List[ServiceFlow] = []
 
-    async def async_get_devices(self) -> List[Device]:
+    async def async_get_devices(self):
         """Scan for new devices and return a list with found device IDs."""
         if self.token is None:
             await self.async_initialize_token()
@@ -129,6 +133,55 @@ class ConnectBox:
                 )
         except (element_tree.ParseError, TypeError):
             _LOGGER.warning("Can't read upstream channels from %s", self.host)
+            self.token = None
+            raise exceptions.ConnectBoxNoDataAvailable() from None
+
+    async def async_get_cmstatus_and_service_flows(self):
+        """Get various status information."""
+        if self.token is None:
+            await self.async_initialize_token()
+
+        self.cmstatus = None
+        self.downstream_service_flows = []
+        self.upstream_service_flows = []
+        raw = await self._async_ws_function(CMD_CMSTATUS)
+
+        try:
+            xml_root = element_tree.fromstring(raw)
+            self.cmstatus = CmStatus(
+                provisioningStatus=xml_root.find("provisioning_st").text,
+                cmComment=xml_root.find("cm_comment").text,
+                cmDocsisMode=xml_root.find("cm_docsis_mode").text,
+                cmNetworkAccess=xml_root.find("cm_network_access").text,
+                numberOfCpes=int(xml_root.find("NumberOfCpes").text),
+                firmwareFilename=xml_root.find("FileName").text,
+                dMaxCpes=int(xml_root.find("dMaxCpes").text),
+                bpiEnable=int(xml_root.find("bpiEnable").text),
+            )
+            for elmt_service_flow in xml_root.iter("serviceflow"):
+                service_flow = ServiceFlow(
+                    id=int(elmt_service_flow.find("Sfid").text),
+                    pMaxTrafficRate=int(elmt_service_flow.find("pMaxTrafficRate").text),
+                    pMaxTrafficBurst=int(
+                        elmt_service_flow.find("pMaxTrafficBurst").text
+                    ),
+                    pMinReservedRate=int(
+                        elmt_service_flow.find("pMinReservedRate").text
+                    ),
+                    pMaxConcatBurst=int(elmt_service_flow.find("pMaxConcatBurst").text),
+                    pSchedulingType=int(elmt_service_flow.find("pSchedulingType").text),
+                )
+                direction = int(elmt_service_flow.find("direction").text)
+                if direction == 1:
+                    self.downstream_service_flows.append(service_flow)
+                elif direction == 2:
+                    self.upstream_service_flows.append(service_flow)
+                else:
+                    raise element_tree.ParseError(
+                        "Unknown service flow direction '{}'".format(direction)
+                    )
+        except (element_tree.ParseError, TypeError):
+            _LOGGER.warning("Can't read cmstatus from %s", self.host)
             self.token = None
             raise exceptions.ConnectBoxNoDataAvailable() from None
 
