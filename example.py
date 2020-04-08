@@ -30,6 +30,10 @@ async def main():
         pprint(client.downstream_service_flows)
         pprint(client.upstream_service_flows)
 
+        # Print temperature status
+        await client.async_get_temperature()
+        pprint(client.temperature)
+
         await client.async_close_session()
 
 

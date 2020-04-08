@@ -74,3 +74,14 @@ class ServiceFlow:
 
     # 2 seems to be Best Effort
     pSchedulingType: int = attr.ib()
+
+
+@attr.s
+class Temperature:
+    # temperatures in degrees Celsius
+    tunerTemperature: float = attr.ib()
+    temperature: float = attr.ib()
+
+    # several other stats remain untapped here:
+    # wan_ipv4_addr
+    # wan_ipv6_addr, wan_ipv6_addr_entry

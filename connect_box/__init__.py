@@ -7,7 +7,14 @@ import aiohttp
 from aiohttp.hdrs import REFERER, USER_AGENT
 import defusedxml.ElementTree as element_tree
 
-from .data import Device, DownstreamChannel, UpstreamChannel, CmStatus, ServiceFlow
+from .data import (
+    Device,
+    DownstreamChannel,
+    UpstreamChannel,
+    CmStatus,
+    ServiceFlow,
+    Temperature,
+)
 from . import exceptions
 
 _LOGGER = logging.getLogger(__name__)
@@ -19,6 +26,7 @@ CMD_LOGOUT = 16
 CMD_DEVICES = 123
 CMD_DOWNSTREAM = 10
 CMD_UPSTREAM = 11
+CMD_TEMPERATURE = 136
 CMD_CMSTATUS = 144
 
 
@@ -48,6 +56,7 @@ class ConnectBox:
         self.cmstatus: Optional[CmStatus] = None
         self.upstream_service_flows: List[ServiceFlow] = []
         self.downstream_service_flows: List[ServiceFlow] = []
+        self.temperature: Optional[Temperature] = None
 
     async def async_get_devices(self):
         """Scan for new devices and return a list with found device IDs."""
@@ -182,6 +191,26 @@ class ConnectBox:
                     )
         except (element_tree.ParseError, TypeError):
             _LOGGER.warning("Can't read cmstatus from %s", self.host)
+            self.token = None
+            raise exceptions.ConnectBoxNoDataAvailable() from None
+
+    async def async_get_temperature(self):
+        """Get temperature information (in degrees Celsius)."""
+        if self.token is None:
+            await self.async_initialize_token()
+
+        self.temperature = None
+        raw = await self._async_ws_function(CMD_TEMPERATURE)
+
+        f_to_c = lambda f: (5.0 / 9) * (f - 32)
+        try:
+            xml_root = element_tree.fromstring(raw)
+            self.temperature = Temperature(
+                tunerTemperature=f_to_c(int(xml_root.find("TunnerTemperature").text)),
+                temperature=f_to_c(int(xml_root.find("Temperature").text)),
+            )
+        except (element_tree.ParseError, TypeError):
+            _LOGGER.warning("Can't read temperature from %s", self.host)
             self.token = None
             raise exceptions.ConnectBoxNoDataAvailable() from None
 
