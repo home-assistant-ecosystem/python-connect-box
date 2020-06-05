@@ -365,7 +365,7 @@ class ConnectBox:
         if not self.token:
             return
 
-        await self._async_ws_set_function(CMD_LOGOUT)
+        await self._async_ws_set_function(CMD_LOGOUT, {})
         self.token = None
 
     async def async_initialize_token(self) -> None:
