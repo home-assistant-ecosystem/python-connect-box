@@ -3,14 +3,15 @@ import asyncio
 from pprint import pprint
 
 import aiohttp
-
 from connect_box import ConnectBox
+
+PASSWORD = "Router_password"
 
 
 async def main():
     """Sample code to retrieve the data from an UPC Connect Box."""
     async with aiohttp.ClientSession() as session:
-        client = ConnectBox(session, "password")
+        client = ConnectBox(session, PASSWORD)
 
         # Print details about the downstream channel connectivity
         await client.async_get_downstream()
