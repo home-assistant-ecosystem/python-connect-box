@@ -3,14 +3,15 @@ import asyncio
 from pprint import pprint
 
 import aiohttp
-
 from connect_box import ConnectBox
+
+PASSWORD = "Router_password"
 
 
 async def main():
     """Sample code to retrieve the data from an UPC Connect Box."""
     async with aiohttp.ClientSession() as session:
-        client = ConnectBox(session, "password")
+        client = ConnectBox(session, PASSWORD)
 
         # Print details about the downstream channel connectivity
         await client.async_get_downstream()
@@ -34,6 +35,16 @@ async def main():
         # Show the effect
         await client.async_get_ipv6_filtering()
         pprint(client.ipv6_filters)
+
+        # Print details on general device status
+        await client.async_get_cmstatus_and_service_flows()
+        pprint(client.cmstatus)
+        pprint(client.downstream_service_flows)
+        pprint(client.upstream_service_flows)
+
+        # Print temperature status
+        await client.async_get_temperature()
+        pprint(client.temperature)
 
         await client.async_close_session()
 

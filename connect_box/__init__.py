@@ -9,9 +9,21 @@ import aiohttp
 from aiohttp.hdrs import REFERER, USER_AGENT
 import defusedxml.ElementTree as element_tree
 
-from .data import Device, DownstreamChannel, UpstreamChannel, \
-    Ipv6FilterInstance, FilterState, FilterStatesList, FiltersTimeMode
 from .parsers import _parse_general_time, _parse_daily_time
+
+from .data import (
+    Device,
+    DownstreamChannel,
+    UpstreamChannel,
+    CmStatus,
+    ServiceFlow,
+    Temperature,
+    Ipv6FilterInstance, 
+    FilterState, 
+    FilterStatesList, 
+    FiltersTimeMode,
+)
+
 from . import exceptions
 
 
@@ -26,6 +38,8 @@ CMD_DOWNSTREAM = 10
 CMD_UPSTREAM = 11
 CMD_GET_IPV6_FILTER_RULE = 111
 CMD_SET_IPV6_FILTER_RULE = 112
+CMD_TEMPERATURE = 136
+CMD_CMSTATUS = 144
 
 
 class ConnectBox:
@@ -53,8 +67,12 @@ class ConnectBox:
         self.us_channels: List[UpstreamChannel] = []
         self.ipv6_filters: List[Ipv6FilterInstance] = []
         self._ipv6_filters_time: FiltersTimeMode = None
+        self.cmstatus: Optional[CmStatus] = None
+        self.upstream_service_flows: List[ServiceFlow] = []
+        self.downstream_service_flows: List[ServiceFlow] = []
+        self.temperature: Optional[Temperature] = None
 
-    async def async_get_devices(self) -> List[Device]:
+    async def async_get_devices(self):
         """Scan for new devices and return a list with found device IDs."""
         if self.token is None:
             await self.async_initialize_token()
@@ -240,6 +258,75 @@ class ConnectBox:
 
         _LOGGER.warning("Filter %d not found", idd)
         return None
+
+    async def async_get_cmstatus_and_service_flows(self):
+        """Get various status information."""
+        if self.token is None:
+            await self.async_initialize_token()
+
+        self.cmstatus = None
+        self.downstream_service_flows = []
+        self.upstream_service_flows = []
+        raw = await self._async_ws_function(CMD_CMSTATUS)
+
+        try:
+            xml_root = element_tree.fromstring(raw)
+            self.cmstatus = CmStatus(
+                provisioningStatus=xml_root.find("provisioning_st").text,
+                cmComment=xml_root.find("cm_comment").text,
+                cmDocsisMode=xml_root.find("cm_docsis_mode").text,
+                cmNetworkAccess=xml_root.find("cm_network_access").text,
+                numberOfCpes=int(xml_root.find("NumberOfCpes").text),
+                firmwareFilename=xml_root.find("FileName").text,
+                dMaxCpes=int(xml_root.find("dMaxCpes").text),
+                bpiEnable=int(xml_root.find("bpiEnable").text),
+            )
+            for elmt_service_flow in xml_root.iter("serviceflow"):
+                service_flow = ServiceFlow(
+                    id=int(elmt_service_flow.find("Sfid").text),
+                    pMaxTrafficRate=int(elmt_service_flow.find("pMaxTrafficRate").text),
+                    pMaxTrafficBurst=int(
+                        elmt_service_flow.find("pMaxTrafficBurst").text
+                    ),
+                    pMinReservedRate=int(
+                        elmt_service_flow.find("pMinReservedRate").text
+                    ),
+                    pMaxConcatBurst=int(elmt_service_flow.find("pMaxConcatBurst").text),
+                    pSchedulingType=int(elmt_service_flow.find("pSchedulingType").text),
+                )
+                direction = int(elmt_service_flow.find("direction").text)
+                if direction == 1:
+                    self.downstream_service_flows.append(service_flow)
+                elif direction == 2:
+                    self.upstream_service_flows.append(service_flow)
+                else:
+                    raise element_tree.ParseError(
+                        "Unknown service flow direction '{}'".format(direction)
+                    )
+        except (element_tree.ParseError, TypeError):
+            _LOGGER.warning("Can't read cmstatus from %s", self.host)
+            self.token = None
+            raise exceptions.ConnectBoxNoDataAvailable() from None
+
+    async def async_get_temperature(self):
+        """Get temperature information (in degrees Celsius)."""
+        if self.token is None:
+            await self.async_initialize_token()
+
+        self.temperature = None
+        raw = await self._async_ws_function(CMD_TEMPERATURE)
+
+        f_to_c = lambda f: (5.0 / 9) * (f - 32)
+        try:
+            xml_root = element_tree.fromstring(raw)
+            self.temperature = Temperature(
+                tunerTemperature=f_to_c(int(xml_root.find("TunnerTemperature").text)),
+                temperature=f_to_c(int(xml_root.find("Temperature").text)),
+            )
+        except (element_tree.ParseError, TypeError):
+            _LOGGER.warning("Can't read temperature from %s", self.host)
+            self.token = None
+            raise exceptions.ConnectBoxNoDataAvailable() from None
 
     async def async_close_session(self) -> None:
         """Logout and close session."""
