@@ -46,3 +46,42 @@ class UpstreamChannel:
     t4Timeouts: int = attr.ib()
     channelType: str = attr.ib()
     messageType: int = attr.ib()
+
+
+@attr.s
+class CmStatus:
+    provisioningStatus: str = attr.ib()
+    cmComment: str = attr.ib()
+    cmDocsisMode: str = attr.ib()
+    cmNetworkAccess: str = attr.ib()
+    firmwareFilename: str = attr.ib()
+
+    # number of IP addresses to assign via DHCP
+    numberOfCpes: int = attr.ib()
+
+    # ???
+    dMaxCpes: int = attr.ib()
+    bpiEnable: int = attr.ib()
+
+
+@attr.s
+class ServiceFlow:
+    id: int = attr.ib()
+    pMaxTrafficRate: int = attr.ib()
+    pMaxTrafficBurst: int = attr.ib()
+    pMinReservedRate: int = attr.ib()
+    pMaxConcatBurst: int = attr.ib()
+
+    # 2 seems to be Best Effort
+    pSchedulingType: int = attr.ib()
+
+
+@attr.s
+class Temperature:
+    # temperatures in degrees Celsius
+    tunerTemperature: float = attr.ib()
+    temperature: float = attr.ib()
+
+    # several other stats remain untapped here:
+    # wan_ipv4_addr
+    # wan_ipv6_addr, wan_ipv6_addr_entry
