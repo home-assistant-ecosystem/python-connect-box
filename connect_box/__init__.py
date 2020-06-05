@@ -219,8 +219,25 @@ class ConnectBox:
         if not self.token:
             return
 
-        await self._async_ws_function(CMD_LOGOUT)
-        self.token = None
+        # This needs to go to setter.xml
+        try:
+            async with await self._session.post(
+                f"http://{self.host}/xml/setter.xml",
+                data=f"token={self.token}&fun={CMD_LOGOUT}",
+                headers=self.headers,
+                allow_redirects=False,
+                timeout=10,
+            ) as response:
+                if response.status != 200:
+                    _LOGGER.debug("Receive HTTP code %d", response.status)
+                    self.token = None
+                    raise exceptions.ConnectBoxError()
+
+                self.token = None
+
+        except (asyncio.TimeoutError, aiohttp.ClientError) as err:
+            _LOGGER.error("Error received on %s: %s", function, err)
+            self.token = None
 
     async def async_initialize_token(self) -> None:
         """Get the token first."""
