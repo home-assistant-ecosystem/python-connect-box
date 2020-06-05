@@ -85,12 +85,44 @@ class ConnectBox:
             mac_adresses: List[str] = [mac.text for mac in xml_root.iter("MACAddr")]
             hostnames: List[str] = [mac.text for mac in xml_root.iter("hostname")]
             ip_addresses: List[str] = [mac.text for mac in xml_root.iter("IPv4Addr")]
+            interfaces: List[str] = [mac.text for mac in xml_root.iter("interface")]
+            speeds: List[str] = [mac.text for mac in xml_root.iter("speed")]
+            interface_ids: List[str] = [
+                mac.text for mac in xml_root.iter("interfaceid")
+            ]
+            methods: List[str] = [mac.text for mac in xml_root.iter("method")]
+            lease_times: List[str] = [mac.text for mac in xml_root.iter("leaseTime")]
 
-            for mac_address, hostname, ip_address in zip(
-                mac_adresses, hostnames, ip_addresses
+            for (
+                mac_address,
+                hostname,
+                ip_address,
+                interface,
+                speed,
+                interface_id,
+                method,
+                lease_time,
+            ) in zip(
+                mac_adresses,
+                hostnames,
+                ip_addresses,
+                interfaces,
+                speeds,
+                interface_ids,
+                methods,
+                lease_times,
             ):
                 self.devices.append(
-                    Device(mac_address, hostname, ip_address.partition("/")[0])
+                    Device(
+                        mac_address,
+                        hostname,
+                        ip_address.partition("/")[0],
+                        interface,
+                        speed,
+                        interface_id,
+                        method,
+                        lease_time,
+                    )
                 )
         except (element_tree.ParseError, TypeError):
             _LOGGER.warning("Can't read device from %s", self.host)

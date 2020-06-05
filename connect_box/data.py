@@ -1,6 +1,7 @@
 """Handle Data attributes."""
+from datetime import datetime
 from ipaddress import IPv4Address, IPv6Address, ip_address as convert_ip
-from typing import Union, Iterable
+from typing import Iterable, Union
 
 import attr
 
@@ -12,6 +13,13 @@ class Device:
     mac: str = attr.ib()
     hostname: str = attr.ib(cmp=False)
     ip: Union[IPv4Address, IPv6Address] = attr.ib(cmp=False, converter=convert_ip)
+    interface: str = attr.ib()
+    speed: int = attr.ib()
+    interface_id: int = attr.ib()
+    method: int = attr.ib()
+    lease_time: str = attr.ib(
+        converter=lambda lease_time: datetime.strptime(lease_time, "00:%H:%M:%S")
+    )
 
 
 @attr.s
