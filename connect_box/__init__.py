@@ -267,7 +267,7 @@ class ConnectBox:
         self.cmstatus = None
         self.downstream_service_flows = []
         self.upstream_service_flows = []
-        raw = await self._async_ws_function(CMD_CMSTATUS)
+        raw = await self._async_ws_get_function(CMD_CMSTATUS)
 
         try:
             xml_root = element_tree.fromstring(raw)
@@ -314,7 +314,7 @@ class ConnectBox:
             await self.async_initialize_token()
 
         self.temperature = None
-        raw = await self._async_ws_function(CMD_TEMPERATURE)
+        raw = await self._async_ws_get_function(CMD_TEMPERATURE)
 
         f_to_c = lambda f: (5.0 / 9) * (f - 32)
         try:
