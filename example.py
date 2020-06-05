@@ -25,6 +25,17 @@ async def main():
         await client.async_get_devices()
         pprint(client.devices)
 
+        # Print IPv6 filter rules
+        # (IPv6 required)
+        await client.async_get_ipv6_filtering()
+        pprint(client.ipv6_filters)
+
+        # Toggle enable/disable on the first IPv6 filter rule
+        new_value = await client.async_toggle_ipv6_filter(1)
+        # Show the effect
+        await client.async_get_ipv6_filtering()
+        pprint(client.ipv6_filters)
+
         # Print details on general device status
         await client.async_get_cmstatus_and_service_flows()
         pprint(client.cmstatus)
