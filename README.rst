@@ -44,7 +44,7 @@ The module is available from the `Python Package Index <https://pypi.python.org/
 
     $ pip3 install connect_box
 
-On a Fedora-based system or on a CentOS/RHEL 8 machine with has EPEL enabled.
+On a Fedora-based system or on a CentOS/RHEL 8 machine which has EPEL enabled.
 
 .. code:: bash
 
