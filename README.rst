@@ -50,6 +50,14 @@ On a Fedora-based system or on a CentOS/RHEL 8 machine which has EPEL enabled.
 
     $ sudo dnf -y install python3-connect-box
 
+For Nix or NixOS is `pre-packed module <https://search.nixos.org/packages?channel=unstable&query=connect-box>`_
+available. The lastest release is usually present in the ``unstable`` channel.
+
+.. code:: bash
+
+    $nix-env -iA nixos.python39Packages.connect-box
+
+
 Usage
 -----
 
