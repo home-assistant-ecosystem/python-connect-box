@@ -25,7 +25,7 @@ setup(
     author="Fabian Affolter",
     author_email="fabian@affolter-engineering.ch",
     license="MIT",
-    install_requires=["aiohttp", "defusedxml", "attrs"],
+    install_requires=["aiohttp<4", "defusedxml", "attrs"],
     packages=["connect_box"],
     zip_safe=True,
     classifiers=[
