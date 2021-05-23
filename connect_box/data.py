@@ -130,3 +130,12 @@ class Temperature:
     # several other stats remain untapped here:
     # wan_ipv4_addr
     # wan_ipv6_addr, wan_ipv6_addr_entry
+
+
+@attr.s
+class LogEvent:
+    """An entry in the eventlog_table"""
+    evPrio: str = attr.ib()
+    evMsg: str = attr.ib()
+    evTime: str = attr.ib()
+    evEpoch: int = attr.ib()
