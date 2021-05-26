@@ -46,6 +46,10 @@ async def main():
         await client.async_get_temperature()
         pprint(client.temperature)
 
+        # Print event log entries
+        await client.async_get_eventlog()
+        pprint(client.eventlog)
+
         await client.async_close_session()
 
 

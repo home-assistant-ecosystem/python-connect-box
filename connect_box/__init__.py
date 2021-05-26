@@ -22,6 +22,7 @@ from .data import (
     FilterState, 
     FilterStatesList, 
     FiltersTimeMode,
+    LogEvent,
 )
 
 from . import exceptions
@@ -40,6 +41,7 @@ CMD_GET_IPV6_FILTER_RULE = 111
 CMD_SET_IPV6_FILTER_RULE = 112
 CMD_TEMPERATURE = 136
 CMD_CMSTATUS = 144
+CMD_EVENTLOG = 13
 
 
 class ConnectBox:
@@ -359,6 +361,30 @@ class ConnectBox:
             _LOGGER.warning("Can't read temperature from %s", self.host)
             self.token = None
             raise exceptions.ConnectBoxNoDataAvailable() from None
+
+    async def async_get_eventlog(self):
+        """Get network-related eventlog data."""
+        if self.token is None:
+            await self.async_initialize_token()
+
+        self.eventlog = []
+        raw = await self._async_ws_get_function(CMD_EVENTLOG)
+
+        try:
+            xml_root = element_tree.fromstring(raw)
+            for elmt_log_event in xml_root.iter("eventlog"):
+                log_event = LogEvent(
+                elmt_log_event.find("prior").text,
+                elmt_log_event.find("text").text,
+                elmt_log_event.find("time").text,
+                int(elmt_log_event.find("t").text),
+                )
+                self.eventlog.append(log_event)
+        except (element_tree.ParseError, TypeError):
+            _LOGGER.warning("Can't read eventlog from %s", self.host)
+            self.token = None
+            raise exceptions.ConnectBoxNoDataAvailable() from None
+        self.eventlog.sort(key=(lambda e: e.evEpoch))
 
     async def async_close_session(self) -> None:
         """Logout and close session."""
