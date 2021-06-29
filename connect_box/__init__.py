@@ -46,6 +46,7 @@ CMD_TEMPERATURE = 136
 CMD_CMSTATUS = 144
 CMD_EVENTLOG = 13
 CMD_CMSYSTEMINFO = 2
+CMD_REBOOT = 8
 CMD_LANSTATUS = 100
 CMD_WANSTATUS = 107
 
@@ -447,6 +448,15 @@ class ConnectBox:
             self.token = None
             raise exceptions.ConnectBoxNoDataAvailable() from None
         self.eventlog.sort(key=(lambda e: e.evEpoch))
+
+    async def async_reboot_device(self) -> None:
+        if self.token is None:
+            await self.async_initialize_token()
+
+        await self._async_ws_set_function(CMD_REBOOT, params={})
+
+        # At this point the device must be restarting, so the token becomes invalid
+        self.token = None
 
     async def async_close_session(self) -> None:
         """Logout and close session."""
