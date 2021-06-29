@@ -80,6 +80,7 @@ class ConnectBox:
         self.upstream_service_flows: List[ServiceFlow] = []
         self.downstream_service_flows: List[ServiceFlow] = []
         self.temperature: Optional[Temperature] = None
+        self.eventlog: List[LogEvent] = []
         self.lanstatus: Optional[LanStatus] = None
         self.wanstatus: Optional[WanStatus] = None
         self.cm_systeminfo: Optional[CmSystemInfo] = None
@@ -89,7 +90,7 @@ class ConnectBox:
         if self.token is None:
             await self.async_initialize_token()
 
-        self.devices.clear()
+        self.devices = []
         raw = await self._async_ws_get_function(CMD_DEVICES)
 
         try:
@@ -146,7 +147,7 @@ class ConnectBox:
         if self.token is None:
             await self.async_initialize_token()
 
-        self.ds_channels.clear()
+        self.ds_channels = []
         raw = await self._async_ws_get_function(CMD_DOWNSTREAM)
 
         try:
@@ -176,7 +177,7 @@ class ConnectBox:
         if self.token is None:
             await self.async_initialize_token()
 
-        self.us_channels.clear()
+        self.us_channels = []
         raw = await self._async_ws_get_function(CMD_UPSTREAM)
 
         try:
@@ -208,7 +209,7 @@ class ConnectBox:
         if self.token is None:
             await self.async_initialize_token()
 
-        self.ipv6_filters.clear()
+        self.ipv6_filters = []
         self._ipv6_filters_time = None
         raw = await self._async_ws_get_function(CMD_GET_IPV6_FILTER_RULE)
 
@@ -308,7 +309,7 @@ class ConnectBox:
             await self.async_initialize_token()
 
         self.lanstatus = None
-        raw = await self._async_ws_get_function(CMD_LANSETTING)
+        raw = await self._async_ws_get_function(CMD_LANSTATUS)
         try:
             xml_root = element_tree.fromstring(raw)
             self.lanstatus = LanStatus(
