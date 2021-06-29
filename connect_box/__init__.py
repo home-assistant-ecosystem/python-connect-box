@@ -12,6 +12,7 @@ import defusedxml.ElementTree as element_tree
 from .parsers import _parse_general_time, _parse_daily_time
 
 from .data import (
+    CmSystemInfo,
     Device,
     DownstreamChannel,
     UpstreamChannel,
@@ -42,6 +43,7 @@ CMD_SET_IPV6_FILTER_RULE = 112
 CMD_TEMPERATURE = 136
 CMD_CMSTATUS = 144
 CMD_EVENTLOG = 13
+CMD_CMSYSTEMINFO = 2
 
 
 class ConnectBox:
@@ -73,6 +75,7 @@ class ConnectBox:
         self.upstream_service_flows: List[ServiceFlow] = []
         self.downstream_service_flows: List[ServiceFlow] = []
         self.temperature: Optional[Temperature] = None
+        self.cm_systeminfo: Optional[CmSystemInfo] = None
 
     async def async_get_devices(self):
         """Scan for new devices and return a list with found device IDs."""
@@ -292,6 +295,24 @@ class ConnectBox:
 
         _LOGGER.warning("Filter %d not found", idd)
         return None
+
+    async def async_get_cm_system_info(self):
+        if self.token is None:
+            await self.async_initialize_token()
+
+        self.cm_systeminfo = None
+        raw = await self._async_ws_get_function(CMD_CMSYSTEMINFO)
+        try:
+            xml_root = element_tree.fromstring(raw)
+            self.cm_systeminfo = CmSystemInfo(
+                mac=xml_root.find("cm_mac_addr").text,
+                serial=xml_root.find("cm_serial_number").text,
+                network_access=xml_root.find("cm_network_access").text == "Allowed",
+            )
+        except (element_tree.ParseError, TypeError):
+            _LOGGER.warning("Can't read cm system info from %s", self.host)
+            self.token = None
+            raise exceptions.ConnectBoxNoDataAvailable() from None
 
     async def async_get_cmstatus_and_service_flows(self):
         """Get various status information."""

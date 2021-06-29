@@ -110,6 +110,15 @@ class CmStatus:
 
 
 @attr.s
+class CmSystemInfo:
+    """Cable Modem system information"""
+
+    mac: str = attr.ib()
+    serial: str = attr.ib()
+    network_access: bool = attr.ib()
+
+
+@attr.s
 class ServiceFlow:
     id: int = attr.ib()
     pMaxTrafficRate: int = attr.ib()
