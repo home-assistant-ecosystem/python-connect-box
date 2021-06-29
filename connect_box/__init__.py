@@ -13,6 +13,7 @@ from .parsers import _parse_general_time, _parse_daily_time
 
 from .data import (
     CmSystemInfo,
+    LanStatus,
     Device,
     DownstreamChannel,
     UpstreamChannel,
@@ -44,6 +45,7 @@ CMD_TEMPERATURE = 136
 CMD_CMSTATUS = 144
 CMD_EVENTLOG = 13
 CMD_CMSYSTEMINFO = 2
+CMD_LANSTATUS = 100
 
 
 class ConnectBox:
@@ -75,6 +77,7 @@ class ConnectBox:
         self.upstream_service_flows: List[ServiceFlow] = []
         self.downstream_service_flows: List[ServiceFlow] = []
         self.temperature: Optional[Temperature] = None
+        self.lanstatus: Optional[LanStatus] = None
         self.cm_systeminfo: Optional[CmSystemInfo] = None
 
     async def async_get_devices(self):
@@ -295,6 +298,25 @@ class ConnectBox:
 
         _LOGGER.warning("Filter %d not found", idd)
         return None
+
+    async def async_get_lanstatus(self):
+        if self.token is None:
+            await self.async_initialize_token()
+
+        self.lanstatus = None
+        raw = await self._async_ws_get_function(CMD_LANSETTING)
+        try:
+            xml_root = element_tree.fromstring(raw)
+            self.lanstatus = LanStatus(
+                upnp_enabled=xml_root.find("UPnP").text == "1",
+                mac=xml_root.find("LanMAC").text,
+                ip4=xml_root.find("LanIP").text,
+                ip6=xml_root.find("LanIPv6").text,
+            )
+        except (element_tree.ParseError, TypeError):
+            _LOGGER.warning("Can't read lanstatus from %s", self.host)
+            self.token = None
+            raise exceptions.ConnectBoxNoDataAvailable() from None
 
     async def async_get_cm_system_info(self):
         if self.token is None:

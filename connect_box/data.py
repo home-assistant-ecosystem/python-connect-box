@@ -119,6 +119,14 @@ class CmSystemInfo:
 
 
 @attr.s
+class LanStatus:
+    upnp_enabled: bool = attr.ib()
+    mac: str = attr.ib()
+    ip4: IPv4Address = attr.ib(converter=convert_ip)
+    ip6: IPv6Address = attr.ib(converter=convert_ip)
+
+
+@attr.s
 class ServiceFlow:
     id: int = attr.ib()
     pMaxTrafficRate: int = attr.ib()
