@@ -75,23 +75,30 @@ class Ipv6FilterInstance:
     allow: int = attr.ib()
     enabled: int = attr.ib()
 
+
 @attr.s
 class FiltersTimeMode:
     """Filters time setting."""
+
     TMode: int = attr.ib()
     XmlGeneralTime: str = attr.ib()
     XmlDailyTime: str = attr.ib()
 
+
 @attr.s
 class FilterStatesList:
     """A sequence of filter state instances."""
+
     entries: Iterable = attr.ib()
+
 
 @attr.s
 class FilterState:
     """A filter state instance."""
+
     idd: int = attr.ib()
     enabled: int = attr.ib()
+
 
 @attr.s
 class CmStatus:
@@ -120,10 +127,21 @@ class CmSystemInfo:
 
 @attr.s
 class LanStatus:
+    """Information about the private side of the gateway"""
+
     upnp_enabled: bool = attr.ib()
     mac: str = attr.ib()
     ip4: IPv4Address = attr.ib(converter=convert_ip)
     ip6: IPv6Address = attr.ib(converter=convert_ip)
+
+
+@attr.s
+class WanStatus:
+    """Information about the public side of the gateway"""
+
+    mac: str = attr.ib()
+    ip4: IPv4Address = attr.ib(converter=convert_ip)
+    # response includes ipv6 ranges, not specific addresses
 
 
 @attr.s
@@ -152,6 +170,7 @@ class Temperature:
 @attr.s
 class LogEvent:
     """An entry in the eventlog_table"""
+
     evPrio: str = attr.ib()
     evMsg: str = attr.ib()
     evTime: str = attr.ib()

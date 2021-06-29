@@ -14,6 +14,7 @@ from .parsers import _parse_general_time, _parse_daily_time
 from .data import (
     CmSystemInfo,
     LanStatus,
+    WanStatus,
     Device,
     DownstreamChannel,
     UpstreamChannel,
@@ -46,6 +47,7 @@ CMD_CMSTATUS = 144
 CMD_EVENTLOG = 13
 CMD_CMSYSTEMINFO = 2
 CMD_LANSTATUS = 100
+CMD_WANSTATUS = 107
 
 
 class ConnectBox:
@@ -78,6 +80,7 @@ class ConnectBox:
         self.downstream_service_flows: List[ServiceFlow] = []
         self.temperature: Optional[Temperature] = None
         self.lanstatus: Optional[LanStatus] = None
+        self.wanstatus: Optional[WanStatus] = None
         self.cm_systeminfo: Optional[CmSystemInfo] = None
 
     async def async_get_devices(self):
@@ -315,6 +318,22 @@ class ConnectBox:
             )
         except (element_tree.ParseError, TypeError):
             _LOGGER.warning("Can't read lanstatus from %s", self.host)
+            self.token = None
+            raise exceptions.ConnectBoxNoDataAvailable() from None
+
+    async def async_get_wanstatus(self):
+        if self.token is None:
+            await self.async_initialize_token()
+
+        self.wanstatus = None
+        raw = await self._async_ws_get_function(CMD_WANSTATUS)
+        try:
+            xml_root = element_tree.fromstring(raw)
+            self.wanstatus = WanStatus(
+                mac=xml_root.find("WanMAC").text, ip4=xml_root.find("WanIP").text
+            )
+        except (element_tree.ParseError, TypeError):
+            _LOGGER.warning("Can't read wanstatus from %s", self.host)
             self.token = None
             raise exceptions.ConnectBoxNoDataAvailable() from None
 
