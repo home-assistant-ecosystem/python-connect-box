@@ -1,7 +1,7 @@
 """Handle Data attributes."""
 from datetime import datetime
 from ipaddress import IPv4Address, IPv6Address, ip_address as convert_ip
-from typing import Iterable, Union
+from typing import Iterable, Optional, Union
 
 import attr
 
@@ -142,6 +142,20 @@ class WanStatus:
     mac: str = attr.ib()
     ip4: IPv4Address = attr.ib(converter=convert_ip)
     # response includes ipv6 ranges, not specific addresses
+
+
+@attr.s
+class GlobalSettings:
+    """global settings are available regardless of auth status"""
+
+    # 1 if logged in, 0 if logged out
+    logged_in: bool = attr.ib()
+    # ISP identifier
+    operator_id: str = attr.ib()
+    # lockout due to other user
+    access_denied: bool = attr.ib()
+    # If logged in, software revision
+    sw_version: Optional[str] = attr.ib()
 
 
 @attr.s

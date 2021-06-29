@@ -17,6 +17,7 @@ from .data import (
     FilterState,
     FilterStatesList,
     FiltersTimeMode,
+    GlobalSettings,
     Ipv6FilterInstance,
     LanStatus,
     LogEvent,
@@ -31,6 +32,7 @@ _LOGGER = logging.getLogger(__name__)
 
 HTTP_HEADER_X_REQUESTED_WITH = "X-Requested-With"
 
+CMD_GLOBALSETTINGS = 1
 CMD_CMSYSTEMINFO = 2
 CMD_REBOOT = 8
 CMD_DOWNSTREAM = 10
@@ -80,6 +82,7 @@ class ConnectBox:
         self.lanstatus: Optional[LanStatus] = None
         self.wanstatus: Optional[WanStatus] = None
         self.cm_systeminfo: Optional[CmSystemInfo] = None
+        self.global_settings: Optional[GlobalSettings] = None
 
     async def async_get_devices(self):
         """Scan for new devices and return a list with found device IDs."""
@@ -306,6 +309,7 @@ class ConnectBox:
         return None
 
     async def async_get_lanstatus(self):
+        """Access information related to the router gateway"""
         if self.token is None:
             await self.async_initialize_token()
 
@@ -325,6 +329,7 @@ class ConnectBox:
             raise exceptions.ConnectBoxNoDataAvailable() from None
 
     async def async_get_wanstatus(self):
+        """Access information related to the WAN port"""
         if self.token is None:
             await self.async_initialize_token()
 
@@ -341,6 +346,7 @@ class ConnectBox:
             raise exceptions.ConnectBoxNoDataAvailable() from None
 
     async def async_get_cm_system_info(self):
+        """Access information related to the cable modem"""
         if self.token is None:
             await self.async_initialize_token()
 
@@ -452,6 +458,7 @@ class ConnectBox:
         self.eventlog.sort(key=(lambda e: e.evEpoch))
 
     async def async_reboot_device(self) -> None:
+        """Request that the device reboot"""
         if self.token is None:
             await self.async_initialize_token()
 
@@ -468,8 +475,37 @@ class ConnectBox:
         await self._async_ws_set_function(CMD_LOGOUT, {})
         self.token = None
 
+    async def async_get_global_settings(self) -> None:
+        """Access the global settings, reduced information is available if not logged in before."""
+        if self.token is None:
+            # login is not required for this method
+            await self._async_initialize_valid_token()
+
+        self.global_settings = None
+        raw = await self._async_ws_get_function(CMD_GLOBALSETTINGS)
+        try:
+            xml_root = element_tree.fromstring(raw)
+            sw_version = xml_root.find("SwVersion")
+            global_settings = GlobalSettings(
+                logged_in=xml_root.find("AccessLevel").text == "1",
+                operator_id=xml_root.find("OperatorId").text,
+                # if logged in or nobody is logged in, this returns NONE
+                access_denied=xml_root.find("AccessDenied").text != "NONE",
+                sw_version=sw_version.text if sw_version else None,
+            )
+            self.global_settings = global_settings
+        except (element_tree.ParseError, TypeError):
+            _LOGGER.warning("Can't read global settings from %s", self.host)
+            self.token = None
+            raise exceptions.ConnectBoxNoDataAvailable() from None
+
     async def async_initialize_token(self) -> None:
         """Get the token first."""
+        await self._async_initialize_valid_token()
+        await self._async_do_login_with_password(CMD_LOGIN)
+
+    async def _async_initialize_valid_token(self) -> None:
+        """Initialize self.token to a known good value"""
         try:
             # Get first the token
             async with self._session.get(
@@ -484,9 +520,7 @@ class ConnectBox:
             _LOGGER.error("Can not load login page from %s: %s", self.host, err)
             raise exceptions.ConnectBoxConnectionError()
 
-        await self._async_initialize_token_with_password(CMD_LOGIN)
-
-    async def _async_initialize_token_with_password(self, function: int) -> None:
+    async def _async_do_login_with_password(self, function: int) -> None:
         """Get token with password."""
         try:
             async with await self._session.post(
