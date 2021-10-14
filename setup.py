@@ -25,10 +25,14 @@ setup(
     author="Fabian Affolter",
     author_email="fabian@affolter-engineering.ch",
     license="MIT",
-    install_requires=["aiohttp<4", "defusedxml", "attrs"],
+    install_requires=[
+        "aiohttp<4",
+        "attrs",
+        "defusedxml",
+    ],
     packages=["connect_box"],
     zip_safe=True,
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Console",
