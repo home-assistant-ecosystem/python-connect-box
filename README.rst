@@ -55,7 +55,7 @@ available. The lastest release is usually present in the ``unstable`` channel.
 
 .. code:: bash
 
-    $nix-env -iA nixos.python39Packages.connect-box
+    $ nix-env -iA nixos.python3Packages.connect-box
 
 
 Usage
