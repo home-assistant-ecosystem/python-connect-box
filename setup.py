@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
 """Setup file for Compal CH7465LG Python client."""
 import os
-import sys
-
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+from setuptools import setup
 
 here = os.path.abspath(os.path.dirname(__file__))
 
