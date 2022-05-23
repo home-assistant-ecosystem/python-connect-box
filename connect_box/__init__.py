@@ -1,6 +1,7 @@
 """A Python Client to get data from UPC Connect Boxes."""
 import asyncio
 import logging
+import re
 from typing import Dict, List, Optional
 from collections import OrderedDict
 
@@ -44,17 +45,20 @@ CMD_CMSTATUS = 144
 CMD_EVENTLOG = 13
 
 
+
 class ConnectBox:
     """A class for handling the data retrieval from an UPC Connect Box."""
 
     def __init__(
-        self, session: aiohttp.ClientSession, password: str, host: str = "192.168.0.1"
+        self, session: aiohttp.ClientSession, password: str, host: str = "192.168.0.1", username: str = 'admin'
     ):
         """Initialize the connection."""
         self._session: aiohttp.ClientSession = session
         self.token: Optional[str] = None
         self.host: str = host
+        self.username: str = username
         self.password: str = password
+        self.apiversion: int = None
         self.headers: Dict[str, str] = {
             HTTP_HEADER_X_REQUESTED_WITH: "XMLHttpRequest",
             REFERER: f"http://{self.host}/index.html",
@@ -73,6 +77,11 @@ class ConnectBox:
         self.upstream_service_flows: List[ServiceFlow] = []
         self.downstream_service_flows: List[ServiceFlow] = []
         self.temperature: Optional[Temperature] = None
+        self.cookies: Dict[str, str] = {
+            'sessionToken': None,
+            'SID': None
+        }
+        self.request_token_string: str = None
 
     async def async_get_devices(self):
         """Scan for new devices and return a list with found device IDs."""
@@ -172,6 +181,8 @@ class ConnectBox:
         try:
             xml_root = element_tree.fromstring(raw)
             for upstream in xml_root.iter("upstream"):
+                ustype = upstream.find("ustype").text if upstream.find("ustype") else None
+                channeltype =  upstream.find("channeltype").text if upstream.find("channeltype") else None
                 self.us_channels.append(
                     UpstreamChannel(
                         int(upstream.find("freq").text),
@@ -179,12 +190,12 @@ class ConnectBox:
                         upstream.find("srate").text,
                         upstream.find("usid").text,
                         upstream.find("mod").text,
-                        upstream.find("ustype").text,
+                        ustype,
                         int(upstream.find("t1Timeouts").text),
                         int(upstream.find("t2Timeouts").text),
                         int(upstream.find("t3Timeouts").text),
                         int(upstream.find("t4Timeouts").text),
-                        upstream.find("channeltype").text,
+                        channeltype,
                         int(upstream.find("messageType").text),
                     )
                 )
@@ -305,12 +316,13 @@ class ConnectBox:
 
         try:
             xml_root = element_tree.fromstring(raw)
+            numberOfCpes = int(xml_root.find("NumberOfCpes").text) if xml_root.find("NumberOfCpes") else None
             self.cmstatus = CmStatus(
                 provisioningStatus=xml_root.find("provisioning_st").text,
                 cmComment=xml_root.find("cm_comment").text,
                 cmDocsisMode=xml_root.find("cm_docsis_mode").text,
                 cmNetworkAccess=xml_root.find("cm_network_access").text,
-                numberOfCpes=int(xml_root.find("NumberOfCpes").text),
+                numberOfCpes=numberOfCpes,
                 firmwareFilename=xml_root.find("FileName").text,
                 dMaxCpes=int(xml_root.find("dMaxCpes").text),
                 bpiEnable=int(xml_root.find("bpiEnable").text),
@@ -344,6 +356,7 @@ class ConnectBox:
 
     async def async_get_temperature(self):
         """Get temperature information (in degrees Celsius)."""
+
         if self.token is None:
             await self.async_initialize_token()
 
@@ -403,8 +416,17 @@ class ConnectBox:
                 headers=self.headers,
                 timeout=10,
             ) as response:
-                await response.text()
+                html = await response.text()
+                apiversion = re.findall("CommonAPI\.js\?v=(\d*)", html)
                 self.token = response.cookies["sessionToken"].value
+                if apiversion and len(apiversion) > 0:
+                    self.apiversion = int(apiversion[0])
+                if self.apiversion and self.apiversion >= 20220407070717:
+                    self.cookies["sessionToken"] = f"{self.token}"
+                else:
+                    self.cookies = None
+                    self.request_token_string = f"token=${self.token}&"
+                    self.username = "NULL"
 
         except (asyncio.TimeoutError, aiohttp.ClientError) as err:
             _LOGGER.error("Can not load login page from %s: %s", self.host, err)
@@ -417,18 +439,22 @@ class ConnectBox:
         try:
             async with await self._session.post(
                 f"http://{self.host}/xml/setter.xml",
-                data=f"token={self.token}&fun={function}&Username=NULL&Password={self.password}",
+                data=f"{self.request_token_string}fun={function}&Username={self.username}&Password={self.password}",
                 headers=self.headers,
                 allow_redirects=False,
+                cookies = self.cookies,
                 timeout=10,
             ) as response:
-                await response.text()
+                html = await response.text()
 
                 if response.status != 200:
                     _LOGGER.warning("Login error with code %d", response.status)
                     self.token = None
                     raise exceptions.ConnectBoxLoginError()
                 self.token = response.cookies["sessionToken"].value
+                if self.apiversion >= 20220407070717:
+                    self.cookies["sessionToken"] = f"{self.token}"
+                    self.cookies["SID"] = re.findall("SID=(\d*)", html)[0]
 
         except (asyncio.TimeoutError, aiohttp.ClientError) as err:
             _LOGGER.error("Can not login to %s: %s", self.host, err)
@@ -441,9 +467,10 @@ class ConnectBox:
             # or the UPC firmware will return an error
             async with await self._session.post(
                 f"http://{self.host}/xml/getter.xml",
-                data=f"token={self.token}&fun={function}",
+                data=f"{self.request_token_string}fun={function}",
                 headers=self.headers,
                 allow_redirects=False,
+                cookies = self.cookies,
                 timeout=10,
             ) as response:
 
@@ -455,6 +482,8 @@ class ConnectBox:
 
                 # Load data, store token for next request
                 self.token = response.cookies["sessionToken"].value
+                if self.apiversion >= 20220407070717:
+                    self.cookies["sessionToken"] = f"{self.token}"
                 return await response.text()
 
         except (asyncio.TimeoutError, aiohttp.ClientError) as err:
@@ -477,9 +506,10 @@ class ConnectBox:
 
             async with await self._session.post(
                 f"http://{self.host}/xml/setter.xml",
-                data=f"token={self.token}&fun={function}{params_str}",
+                data=f"{self.request_token_string}fun={function}{params_str}",
                 #data=params,
                 headers=self.headers,
+                cookies = self.cookies,
                 allow_redirects=False,
                 timeout=10,
             ) as response:
@@ -494,6 +524,7 @@ class ConnectBox:
 
                 # Load data, store token for next request
                 self.token = response.cookies["sessionToken"].value
+                self.cookies["sessionToken"] = f"{self.token}"
                 await response.text()
                 return True
 
