@@ -1,7 +1,7 @@
 """Handle Data attributes."""
 from datetime import datetime
 from ipaddress import IPv4Address, IPv6Address, ip_address as convert_ip
-from typing import Iterable, Union
+from typing import Iterable, Optional, Union
 
 import attr
 
@@ -75,23 +75,30 @@ class Ipv6FilterInstance:
     allow: int = attr.ib()
     enabled: int = attr.ib()
 
+
 @attr.s
 class FiltersTimeMode:
     """Filters time setting."""
+
     TMode: int = attr.ib()
     XmlGeneralTime: str = attr.ib()
     XmlDailyTime: str = attr.ib()
 
+
 @attr.s
 class FilterStatesList:
     """A sequence of filter state instances."""
+
     entries: Iterable = attr.ib()
+
 
 @attr.s
 class FilterState:
     """A filter state instance."""
+
     idd: int = attr.ib()
     enabled: int = attr.ib()
+
 
 @attr.s
 class CmStatus:
@@ -107,6 +114,48 @@ class CmStatus:
     # ???
     dMaxCpes: int = attr.ib()
     bpiEnable: int = attr.ib()
+
+
+@attr.s
+class CmSystemInfo:
+    """Cable Modem system information"""
+
+    mac: str = attr.ib()
+    serial: str = attr.ib()
+    network_access: bool = attr.ib()
+
+
+@attr.s
+class LanStatus:
+    """Information about the private side of the gateway"""
+
+    upnp_enabled: bool = attr.ib()
+    mac: str = attr.ib()
+    ip4: IPv4Address = attr.ib(converter=convert_ip)
+    ip6: IPv6Address = attr.ib(converter=convert_ip)
+
+
+@attr.s
+class WanStatus:
+    """Information about the public side of the gateway"""
+
+    mac: str = attr.ib()
+    ip4: IPv4Address = attr.ib(converter=convert_ip)
+    # response includes ipv6 ranges, not specific addresses
+
+
+@attr.s
+class GlobalSettings:
+    """global settings are available regardless of auth status"""
+
+    # 1 if logged in, 0 if logged out
+    logged_in: bool = attr.ib()
+    # ISP identifier
+    operator_id: str = attr.ib()
+    # lockout due to other user
+    access_denied: bool = attr.ib()
+    # If logged in, software revision
+    sw_version: Optional[str] = attr.ib()
 
 
 @attr.s
@@ -135,6 +184,7 @@ class Temperature:
 @attr.s
 class LogEvent:
     """An entry in the eventlog_table"""
+
     evPrio: str = attr.ib()
     evMsg: str = attr.ib()
     evTime: str = attr.ib()
