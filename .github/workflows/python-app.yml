@@ -20,5 +20,5 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Black Code Formatter
-      uses: lgeiger/black-action@v1.0.1
+    - name: Black code formatting
+      uses: jpetrucciani/black-check@21.12b0
