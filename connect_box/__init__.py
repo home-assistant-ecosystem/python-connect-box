@@ -530,13 +530,13 @@ class ConnectBox:
                 html = await response.text()
                 apiversion = re.findall("CommonAPI\.js\?v=(\d*)", html)
                 self.token = response.cookies["sessionToken"].value
-                if apiversion and len(apiversion) > 0:
+                if apiversion:
                     self.apiversion = int(apiversion[0])
                 if self.apiversion and self.apiversion >= 20220407070717:
                     self.cookies["sessionToken"] = f"{self.token}"
                 else:
                     self.cookies = None
-                    self.request_token_string = f"token=${self.token}&"
+                    self.request_token_string = f"token={self.token}&"
                     self.username = "NULL"
 
         except (asyncio.TimeoutError, aiohttp.ClientError) as err:
@@ -561,7 +561,7 @@ class ConnectBox:
                     self.token = None
                     raise exceptions.ConnectBoxLoginError()
                 self.token = response.cookies["sessionToken"].value
-                if self.apiversion >= 20220407070717:
+                if self.apiversion and self.apiversion >= 20220407070717:
                     self.cookies["sessionToken"] = f"{self.token}"
                     self.cookies["SID"] = re.findall("SID=(\d*)", html)[0]
 
