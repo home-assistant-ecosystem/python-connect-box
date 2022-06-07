@@ -53,5 +53,5 @@ async def main():
         await client.async_close_session()
 
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
+if __name__ == "__main__":
+    asyncio.run(main())

@@ -491,7 +491,7 @@ class ConnectBox:
     async def async_get_global_settings(self) -> None:
         """Access the global settings, reduced information is available if not logged in before."""
         if self.token is None:
-            # login is not required for this method
+            # Loging in is not required for this method
             await self._async_initialize_valid_token()
 
         self.global_settings = None
@@ -502,7 +502,8 @@ class ConnectBox:
             global_settings = GlobalSettings(
                 logged_in=xml_root.find("AccessLevel").text == "1",
                 operator_id=xml_root.find("OperatorId").text,
-                # if logged in or nobody is logged in, this returns NONE
+                # If logged in or nobody is logged in, this returns NONE
+                # Only one user is allowed at any given time
                 access_denied=xml_root.find("AccessDenied").text != "NONE",
                 sw_version=sw_version.text if sw_version else None,
             )
@@ -571,8 +572,8 @@ class ConnectBox:
     async def _async_ws_get_function(self, function: int) -> Optional[str]:
         """Execute a command on UPC firmware webservice."""
         try:
-            # The 'token' parameter has to be first, and 'fun' second
-            # or the UPC firmware will return an error
+            # The 'token' parameter has to be first and 'fun' second. Otherwise
+            # the firmware will return an error
             async with await self._session.post(
                 f"http://{self.host}/xml/getter.xml",
                 data=f"{self.request_token_string}fun={function}",
@@ -610,8 +611,8 @@ class ConnectBox:
             params(dict): key/value pairs to be passed to the function
         """
         try:
-            # The 'token' parameter has to be first, and 'fun' second
-            # or the UPC firmware will return an error
+            # The 'token' parameter has to be first and 'fun' second. Otherwise
+            # the firmware will return an error
             params_str = "".join([f"&{key}={value}" for (key, value) in params.items()])
 
             async with await self._session.post(
