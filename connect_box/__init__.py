@@ -561,9 +561,15 @@ class ConnectBox:
                     self.token = None
                     raise exceptions.ConnectBoxLoginError()
                 self.token = response.cookies["sessionToken"].value
+                if html == "KDGloginincorrect":
+                    _LOGGER.warning("Login incorrect")
+                    self.token = None
+                    raise exceptions.ConnectBoxLoginError()
                 if self.apiversion and self.apiversion >= 20220407070717:
                     self.cookies["sessionToken"] = f"{self.token}"
                     self.cookies["SID"] = re.findall("SID=(\d*)", html)[0]
+                else:                    
+                    self.request_token_string = f"token={self.token}&"
 
         except (asyncio.TimeoutError, aiohttp.ClientError) as err:
             _LOGGER.error("Can not login to %s: %s", self.host, err)
@@ -591,8 +597,10 @@ class ConnectBox:
 
                 # Load data, store token for next request
                 self.token = response.cookies["sessionToken"].value
-                if self.apiversion >= 20220407070717:
+                if self.apiversion and self.apiversion >= 20220407070717:
                     self.cookies["sessionToken"] = f"{self.token}"
+                else:                    
+                    self.request_token_string = f"token={self.token}&"
                 return await response.text()
 
         except (asyncio.TimeoutError, aiohttp.ClientError) as err:
@@ -634,7 +642,10 @@ class ConnectBox:
 
                 # Load data, store token for next request
                 self.token = response.cookies["sessionToken"].value
-                self.cookies["sessionToken"] = f"{self.token}"
+                if self.apiversion and self.apiversion >= 20220407070717:
+                    self.cookies["sessionToken"] = f"{self.token}"
+                else:                    
+                    self.request_token_string = f"token={self.token}&"
                 await response.text()
                 return True
 
