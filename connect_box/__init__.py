@@ -1,7 +1,9 @@
 """A Python Client to get data from UPC Connect Boxes."""
 import asyncio
 from collections import OrderedDict
+from http.cookies import BaseCookie
 import logging
+import re
 from typing import Dict, List, Optional
 
 import aiohttp
@@ -53,13 +55,19 @@ class ConnectBox:
     """A class for handling the data retrieval from an UPC Connect Box."""
 
     def __init__(
-        self, session: aiohttp.ClientSession, password: str, host: str = "192.168.0.1"
+        self,
+        session: aiohttp.ClientSession,
+        password: str,
+        host: str = "192.168.0.1",
+        username: str = "admin",
+        use_token: bool = True,
     ):
         """Initialize the connection."""
         self._session: aiohttp.ClientSession = session
-        self.token: Optional[str] = None
         self.host: str = host
+        self.username: str = username
         self.password: str = password
+        self.use_token: bool = use_token
         self.headers: Dict[str, str] = {
             HTTP_HEADER_X_REQUESTED_WITH: "XMLHttpRequest",
             REFERER: f"http://{self.host}/index.html",
@@ -84,9 +92,12 @@ class ConnectBox:
         self.cm_systeminfo: Optional[CmSystemInfo] = None
         self.global_settings: Optional[GlobalSettings] = None
 
+        # Allow setting cookies for IP addresses
+        self._session.cookie_jar._unsafe = True
+
     async def async_get_devices(self):
         """Scan for new devices and return a list with found device IDs."""
-        if self.token is None:
+        if not self._has_token():
             await self.async_initialize_token()
 
         self.devices = []
@@ -138,12 +149,11 @@ class ConnectBox:
                 )
         except (element_tree.ParseError, TypeError):
             _LOGGER.warning("Can't read device from %s", self.host)
-            self.token = None
-            raise exceptions.ConnectBoxNoDataAvailable() from None
+            raise exceptions.ConnectBoxNoDataAvailable()
 
     async def async_get_downstream(self):
         """Get the current downstream cable modem state."""
-        if self.token is None:
+        if not self._has_token():
             await self.async_initialize_token()
 
         self.ds_channels = []
@@ -168,12 +178,11 @@ class ConnectBox:
                 )
         except (element_tree.ParseError, TypeError):
             _LOGGER.warning("Can't read downstream channels from %s", self.host)
-            self.token = None
-            raise exceptions.ConnectBoxNoDataAvailable() from None
+            raise exceptions.ConnectBoxNoDataAvailable()
 
     async def async_get_upstream(self):
         """Get the current upstream cable modem state."""
-        if self.token is None:
+        if not self._has_token():
             await self.async_initialize_token()
 
         self.us_channels = []
@@ -189,23 +198,20 @@ class ConnectBox:
                         upstream.find("srate").text,
                         upstream.find("usid").text,
                         upstream.find("mod").text,
-                        upstream.find("ustype").text,
                         int(upstream.find("t1Timeouts").text),
                         int(upstream.find("t2Timeouts").text),
                         int(upstream.find("t3Timeouts").text),
                         int(upstream.find("t4Timeouts").text),
-                        upstream.find("channeltype").text,
                         int(upstream.find("messageType").text),
                     )
                 )
         except (element_tree.ParseError, TypeError):
             _LOGGER.warning("Can't read upstream channels from %s", self.host)
-            self.token = None
-            raise exceptions.ConnectBoxNoDataAvailable() from None
+            raise exceptions.ConnectBoxNoDataAvailable()
 
     async def async_get_ipv6_filtering(self) -> None:
         """Get the current ipv6 filter (and filters time) rules."""
-        if self.token is None:
+        if not self._has_token():
             await self.async_initialize_token()
 
         self.ipv6_filters = []
@@ -240,8 +246,7 @@ class ConnectBox:
 
         except (element_tree.ParseError, TypeError):
             _LOGGER.warning("Can't read IPv6 filter rules from %s", self.host)
-            self.token = None
-            raise exceptions.ConnectBoxNoDataAvailable() from None
+            raise exceptions.ConnectBoxNoDataAvailable()
 
     async def _async_get_ipv6_filter_states(self) -> FilterStatesList:
         """Get enable/disable states of IPv6 filter instances."""
@@ -255,7 +260,7 @@ class ConnectBox:
 
     async def _async_update_ipv6_filter_states(self, filter_states: FilterStatesList):
         """Update enable/disable states of IPv6 filters while not affecting any other settings."""
-        if self.token is None:
+        if not self._has_token():
             await self.async_initialize_token()
 
         val_enabled = "*".join([str(fs.enabled) for fs in filter_states.entries])
@@ -310,7 +315,7 @@ class ConnectBox:
 
     async def async_get_lanstatus(self):
         """Access information related to the router gateway"""
-        if self.token is None:
+        if not self._has_token():
             await self.async_initialize_token()
 
         self.lanstatus = None
@@ -325,12 +330,11 @@ class ConnectBox:
             )
         except (element_tree.ParseError, TypeError):
             _LOGGER.warning("Can't read lanstatus from %s", self.host)
-            self.token = None
-            raise exceptions.ConnectBoxNoDataAvailable() from None
+            raise exceptions.ConnectBoxNoDataAvailable()
 
     async def async_get_wanstatus(self):
         """Access information related to the WAN port."""
-        if self.token is None:
+        if not self._has_token():
             await self.async_initialize_token()
 
         self.wanstatus = None
@@ -342,12 +346,11 @@ class ConnectBox:
             )
         except (element_tree.ParseError, TypeError):
             _LOGGER.warning("Can't read wanstatus from %s", self.host)
-            self.token = None
-            raise exceptions.ConnectBoxNoDataAvailable() from None
+            raise exceptions.ConnectBoxNoDataAvailable()
 
     async def async_get_cm_system_info(self):
         """Access information related to the cable modem."""
-        if self.token is None:
+        if not self._has_token():
             await self.async_initialize_token()
 
         self.cm_systeminfo = None
@@ -361,12 +364,11 @@ class ConnectBox:
             )
         except (element_tree.ParseError, TypeError):
             _LOGGER.warning("Can't read cm system info from %s", self.host)
-            self.token = None
-            raise exceptions.ConnectBoxNoDataAvailable() from None
+            raise exceptions.ConnectBoxNoDataAvailable()
 
     async def async_get_cmstatus_and_service_flows(self):
         """Get various status information."""
-        if self.token is None:
+        if not self._has_token():
             await self.async_initialize_token()
 
         self.cmstatus = None
@@ -381,7 +383,6 @@ class ConnectBox:
                 cmComment=xml_root.find("cm_comment").text,
                 cmDocsisMode=xml_root.find("cm_docsis_mode").text,
                 cmNetworkAccess=xml_root.find("cm_network_access").text,
-                numberOfCpes=int(xml_root.find("NumberOfCpes").text),
                 firmwareFilename=xml_root.find("FileName").text,
                 dMaxCpes=int(xml_root.find("dMaxCpes").text),
                 bpiEnable=int(xml_root.find("bpiEnable").text),
@@ -410,12 +411,11 @@ class ConnectBox:
                     )
         except (element_tree.ParseError, TypeError):
             _LOGGER.warning("Can't read cmstatus from %s", self.host)
-            self.token = None
-            raise exceptions.ConnectBoxNoDataAvailable() from None
+            raise exceptions.ConnectBoxNoDataAvailable()
 
     async def async_get_temperature(self):
         """Get temperature information (in degrees Celsius)."""
-        if self.token is None:
+        if not self._has_token():
             await self.async_initialize_token()
 
         self.temperature = None
@@ -430,12 +430,11 @@ class ConnectBox:
             )
         except (element_tree.ParseError, TypeError):
             _LOGGER.warning("Can't read temperature from %s", self.host)
-            self.token = None
-            raise exceptions.ConnectBoxNoDataAvailable() from None
+            raise exceptions.ConnectBoxNoDataAvailable()
 
     async def async_get_eventlog(self):
         """Get network-related eventlog data."""
-        if self.token is None:
+        if not self._has_token():
             await self.async_initialize_token()
 
         self.eventlog = []
@@ -453,31 +452,31 @@ class ConnectBox:
                 self.eventlog.append(log_event)
         except (element_tree.ParseError, TypeError):
             _LOGGER.warning("Can't read eventlog from %s", self.host)
-            self.token = None
-            raise exceptions.ConnectBoxNoDataAvailable() from None
+            raise exceptions.ConnectBoxNoDataAvailable()
+
         self.eventlog.sort(key=(lambda e: e.evEpoch))
 
     async def async_reboot_device(self) -> None:
         """Request that the device reboot"""
-        if self.token is None:
+        if not self._has_token():
             await self.async_initialize_token()
 
         await self._async_ws_set_function(CMD_REBOOT, params={})
 
         # At this point the device must be restarting, so the token becomes invalid
-        self.token = None
+        self._clear_token()
 
     async def async_close_session(self) -> None:
         """Logout and close session."""
-        if not self.token:
+        if not self._has_token():
             return
 
         await self._async_ws_set_function(CMD_LOGOUT, {})
-        self.token = None
+        self._clear_token()
 
     async def async_get_global_settings(self) -> None:
         """Access the global settings, reduced information is available if not logged in before."""
-        if self.token is None:
+        if not self._has_token():
             # Loging in is not required for this method
             await self._async_initialize_valid_token()
 
@@ -497,8 +496,7 @@ class ConnectBox:
             self.global_settings = global_settings
         except (element_tree.ParseError, TypeError):
             _LOGGER.warning("Can't read global settings from %s", self.host)
-            self.token = None
-            raise exceptions.ConnectBoxNoDataAvailable() from None
+            raise exceptions.ConnectBoxNoDataAvailable()
 
     async def async_initialize_token(self) -> None:
         """Get the token first."""
@@ -506,7 +504,7 @@ class ConnectBox:
         await self._async_do_login_with_password(CMD_LOGIN)
 
     async def _async_initialize_valid_token(self) -> None:
-        """Initialize self.token to a known good value"""
+        """Initialize the session token"""
         try:
             # Get first the token
             async with self._session.get(
@@ -515,7 +513,6 @@ class ConnectBox:
                 timeout=10,
             ) as response:
                 await response.text()
-                #self.token = response.cookies["sessionToken"].value
 
         except (asyncio.TimeoutError, aiohttp.ClientError) as err:
             _LOGGER.error("Can not load login page from %s: %s", self.host, err)
@@ -523,21 +520,42 @@ class ConnectBox:
 
     async def _async_do_login_with_password(self, function: int) -> None:
         """Get token with password."""
+        params = OrderedDict(
+            [
+                ("Username", "NULL" if self.use_token else self.username),
+                ("Password", self.password),
+            ]
+        )
+
         try:
             async with await self._session.post(
                 f"http://{self.host}/xml/setter.xml",
-                data=f"token={self.token}&fun={function}&Username=NULL&Password={self.password}",
+                data=self._payload(function, params),
                 headers=self.headers,
                 allow_redirects=False,
                 timeout=10,
             ) as response:
-                await response.text()
+                html = await response.text()
 
                 if response.status != 200:
                     _LOGGER.warning("Login error with code %d", response.status)
-                    self.token = None
+                    self._clear_token()
                     raise exceptions.ConnectBoxLoginError()
-                self.token = response.cookies["sessionToken"].value
+
+                sid_matcher = re.search("SID=(\d*)", html)
+                if sid_matcher:
+                    self._session.cookie_jar.update_cookies(
+                        {"SID": sid_matcher.group(1)}
+                    )
+
+                if not sid_matcher and not self.use_token:
+                    _LOGGER.error(
+                        "Could not find an SID in the login response, "
+                        "which is mandatory for non-token based authentication. "
+                        "Response is: %s",
+                        html,
+                    )
+                    raise exceptions.ConnectBoxLoginError()
 
         except (asyncio.TimeoutError, aiohttp.ClientError) as err:
             _LOGGER.error("Can not login to %s: %s", self.host, err)
@@ -546,29 +564,23 @@ class ConnectBox:
     async def _async_ws_get_function(self, function: int) -> Optional[str]:
         """Execute a command on UPC firmware webservice."""
         try:
-            # The 'token' parameter has to be first and 'fun' second. Otherwise
-            # the firmware will return an error
             async with await self._session.post(
                 f"http://{self.host}/xml/getter.xml",
-                data=f"token={self.token}&fun={function}",
+                data=self._payload(function),
                 headers=self.headers,
                 allow_redirects=False,
                 timeout=10,
             ) as response:
-
                 # If there is an error
                 if response.status != 200:
                     _LOGGER.debug("Receive HTTP code %d", response.status)
-                    self.token = None
+                    self._clear_token()
                     raise exceptions.ConnectBoxError()
 
-                # Load data, store token for next request
-                self.token = response.cookies["sessionToken"].value
                 return await response.text()
 
         except (asyncio.TimeoutError, aiohttp.ClientError) as err:
             _LOGGER.error("Error received on %s: %s", function, err)
-            self.token = None
 
         raise exceptions.ConnectBoxConnectionError()
 
@@ -582,34 +594,45 @@ class ConnectBox:
             params(dict): key/value pairs to be passed to the function
         """
         try:
-            # The 'token' parameter has to be first and 'fun' second. Otherwise
-            # the firmware will return an error
-            params_str = "".join([f"&{key}={value}" for (key, value) in params.items()])
-
             async with await self._session.post(
                 f"http://{self.host}/xml/setter.xml",
-                data=f"token={self.token}&fun={function}{params_str}",
-                # data=params,
+                data=self._payload(function, params),
                 headers=self.headers,
                 allow_redirects=False,
                 timeout=10,
             ) as response:
-
                 # If there is an error
                 if response.status != 200:
                     _LOGGER.debug("Receive HTTP code %d", response.status)
-                    self.token = None
-                    print(response.status)
-                    print(response.content)
+                    self._clear_token()
                     raise exceptions.ConnectBoxError()
 
-                # Load data, store token for next request
-                self.token = response.cookies["sessionToken"].value
                 await response.text()
                 return True
 
         except (asyncio.TimeoutError, aiohttp.ClientError) as err:
             _LOGGER.error("Error received on %s: %s", function, err)
-            self.token = None
 
         raise exceptions.ConnectBoxConnectionError()
+
+    def _domain_cookies(self) -> BaseCookie[str]:
+        return self._session.cookie_jar.filter_cookies("http://" + self.host)
+
+    def _has_token(self) -> bool:
+        return "sessionToken" in self._domain_cookies()
+
+    def _clear_token(self):
+        self._session.cookie_jar.clear()
+
+    def _payload(self, function: int, data: OrderedDict = {}) -> str:
+        payload = OrderedDict()
+
+        # The 'token' parameter has to be first and 'fun' second.
+        # Otherwise the firmware will return an error
+        if self.use_token:
+            payload["token"] = self._domain_cookies()["sessionToken"].value
+
+        payload["fun"] = function
+        payload.update(data)
+
+        return "".join([f"&{key}={value}" for (key, value) in payload.items()])
