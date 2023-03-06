@@ -244,7 +244,7 @@ class ConnectBox:
             raise exceptions.ConnectBoxNoDataAvailable() from None
 
     async def _async_get_ipv6_filter_states(self) -> FilterStatesList:
-        """Get enable/disable states of IPv6 filter instances"""
+        """Get enable/disable states of IPv6 filter instances."""
         await self.async_get_ipv6_filtering()
         return FilterStatesList(
             list(
@@ -254,7 +254,7 @@ class ConnectBox:
         )
 
     async def _async_update_ipv6_filter_states(self, filter_states: FilterStatesList):
-        """Update enable/disable states of IPv6 filters while not affecting any other setting"""
+        """Update enable/disable states of IPv6 filters while not affecting any other settings."""
         if self.token is None:
             await self.async_initialize_token()
 
@@ -329,7 +329,7 @@ class ConnectBox:
             raise exceptions.ConnectBoxNoDataAvailable() from None
 
     async def async_get_wanstatus(self):
-        """Access information related to the WAN port"""
+        """Access information related to the WAN port."""
         if self.token is None:
             await self.async_initialize_token()
 
@@ -346,7 +346,7 @@ class ConnectBox:
             raise exceptions.ConnectBoxNoDataAvailable() from None
 
     async def async_get_cm_system_info(self):
-        """Access information related to the cable modem"""
+        """Access information related to the cable modem."""
         if self.token is None:
             await self.async_initialize_token()
 
@@ -515,7 +515,7 @@ class ConnectBox:
                 timeout=10,
             ) as response:
                 await response.text()
-                self.token = response.cookies["sessionToken"].value
+                #self.token = response.cookies["sessionToken"].value
 
         except (asyncio.TimeoutError, aiohttp.ClientError) as err:
             _LOGGER.error("Can not load login page from %s: %s", self.host, err)
