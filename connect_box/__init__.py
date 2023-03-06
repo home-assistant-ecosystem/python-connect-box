@@ -1,6 +1,7 @@
 """A Python Client to get data from UPC Connect Boxes."""
 import asyncio
 from collections import OrderedDict
+from hashlib import sha256
 from http.cookies import BaseCookie
 import logging
 import re
@@ -61,6 +62,7 @@ class ConnectBox:
         host: str = "192.168.0.1",
         username: str = "admin",
         use_token: bool = True,
+        encrypt_password: bool = False,
     ):
         """Initialize the connection."""
         self._session: aiohttp.ClientSession = session
@@ -91,6 +93,10 @@ class ConnectBox:
         self.wanstatus: Optional[WanStatus] = None
         self.cm_systeminfo: Optional[CmSystemInfo] = None
         self.global_settings: Optional[GlobalSettings] = None
+
+        # Optionally encrypt_password the password if requested
+        if password and encrypt_password:
+            self.password = sha256(self.password.encode("utf-8")).hexdigest()
 
         # Allow setting cookies for IP addresses
         self._session.cookie_jar._unsafe = True
