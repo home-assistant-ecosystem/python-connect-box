@@ -11,7 +11,7 @@ PASSWORD = "Router_password"
 async def main():
     """Sample code to retrieve the data from an UPC Connect Box."""
     async with aiohttp.ClientSession() as session:
-        client = ConnectBox(session, PASSWORD, use_token=False, encrypt_password=True)
+        client = ConnectBox(session, PASSWORD, use_token=False, encrypt_password=False)
 
         # Print details about the downstream channel connectivity
         await client.async_get_downstream()

@@ -514,7 +514,7 @@ class ConnectBox:
         try:
             # Get first the token
             async with self._session.get(
-                f"http://{self.host}/common_page/login.html",
+                f"http://{self.host}/index.html",
                 headers=self.headers,
                 timeout=10,
             ) as response:
