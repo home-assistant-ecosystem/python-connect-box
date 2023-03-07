@@ -70,9 +70,9 @@ For development is recommended to use a ``venv``.
 
 .. code:: bash
 
-    $ python3.6 -m venv .
+    $ python -m venv .
     $ source bin/activate
-    $ python3 setup.py develop
+    $ python setup.py develop
 
 License
 -------
