@@ -531,7 +531,7 @@ class ConnectBox:
                 allow_redirects=False,
                 timeout=10,
             ) as response:
-                await response.text()
+                await response.read()
 
                 if response.status != 200:
                     _LOGGER.warning("Login error with code %d", response.status)
