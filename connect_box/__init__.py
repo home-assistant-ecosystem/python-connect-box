@@ -514,8 +514,8 @@ class ConnectBox:
                 headers=self.headers,
                 timeout=10,
             ) as response:
-                await response.text()
-                #self.token = response.cookies["sessionToken"].value
+                await response.read()
+                self.token = response.cookies["sessionToken"].value
 
         except (asyncio.TimeoutError, aiohttp.ClientError) as err:
             _LOGGER.error("Can not load login page from %s: %s", self.host, err)
