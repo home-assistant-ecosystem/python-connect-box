@@ -5,6 +5,7 @@ Python Client for interacting with the cable modem/router Compal CH7465LG which
 is provided under different names by various ISP in Europe.
 
 - UPC Connect Box (CH)
+- Play Connect Box (PL)
 - Irish Virgin Media Super Hub 3.0 (IE)
 - Ziggo Connectbox (NL)
 - Unitymedia Connect Box (DE)
