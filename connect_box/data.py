@@ -47,12 +47,10 @@ class UpstreamChannel:
     symbolRate: str = attr.ib()
     id: str = attr.ib()
     modulation: str = attr.ib()
-    type: str = attr.ib()
     t1Timeouts: int = attr.ib()
     t2Timeouts: int = attr.ib()
     t3Timeouts: int = attr.ib()
     t4Timeouts: int = attr.ib()
-    channelType: str = attr.ib()
     messageType: int = attr.ib()
 
 
@@ -107,9 +105,6 @@ class CmStatus:
     cmDocsisMode: str = attr.ib()
     cmNetworkAccess: str = attr.ib()
     firmwareFilename: str = attr.ib()
-
-    # number of IP addresses to assign via DHCP
-    numberOfCpes: int = attr.ib()
 
     # ???
     dMaxCpes: int = attr.ib()
