@@ -1,0 +1,86 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Referer:
+      - http://192.168.0.1/index.html
+      User-Agent:
+      - Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko)
+        Chrome/47.0.2526.106 Safari/537.36
+      X-Requested-With:
+      - XMLHttpRequest
+    method: GET
+    uri: http://192.168.0.1/common_page/login.html
+  response:
+    body:
+      string: !!binary |
+        CQkJCQk8dGggd2lkdGg9IjEwJSIgY2xhc3M9IiI+PHNwYW4gaWQ9ImNfbnMwNCIgY2xhc3M9ImR5bmFt
+        aWMiPlBvd2VyIChkQqNnVik8L3NwYW4+PC90aD4KCQkJCQk8dGggd2lkdGg9IjE1JSIgY2xhc3M9IiI+
+        PHNwYW4gaWQ9ImNfbnMwNCIgY2xhc3M9ImR5bmFtaWMiPlBvd2VyIChkQqNnVik8L3NwYW4+PC90aD4J
+        CQkJCQo=
+    headers:
+      Cache-Control:
+      - no-cache
+      Connection:
+      - close
+      Content-Length:
+      - '185'
+      Content-Type:
+      - text/html
+      Date:
+      - Wed, 03 Jan 2024 18:56:40 GMT
+      Expires:
+      - '-1'
+      Last-Modified:
+      - Fri, 27 Aug 2021 01:46:26 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - NET-DK/1.0
+      Set-Cookie:
+      - sessionToken=[SESSION_TOKEN]; path=/;
+      X-Frame-Options:
+      - SAMEORIGIN
+    status:
+      code: 200
+      message: Ok
+- request:
+    body: token=[SESSION_TOKEN]&fun=15&Username=NULL&Password=[PASSWORD]
+    headers:
+      Referer:
+      - http://192.168.0.1/index.html
+      User-Agent:
+      - Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko)
+        Chrome/47.0.2526.106 Safari/537.36
+      X-Requested-With:
+      - XMLHttpRequest
+    method: POST
+    uri: http://192.168.0.1/xml/setter.xml
+  response:
+    body:
+      string: successful;SID=520325376
+    headers:
+      Cache-Control:
+      - no-cache
+      Connection:
+      - close
+      Content-Type:
+      - text/xml
+      Date:
+      - Wed, 03 Jan 2024 18:56:41 GMT
+      Expires:
+      - '-1'
+      Last-Modified:
+      - Fri, 27 Aug 2021 01:46:26 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - NET-DK/1.0
+      Set-Cookie:
+      - sessionToken=[SESSION_TOKEN]; path=/;
+      X-Frame-Options:
+      - SAMEORIGIN
+    status:
+      code: 200
+      message: Ok
+version: 1

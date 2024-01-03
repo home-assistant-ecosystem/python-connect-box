@@ -514,6 +514,7 @@ class ConnectBox:
                 headers=self.headers,
                 timeout=10,
             ) as response:
+                print(response)
                 await response.read()
                 self.token = response.cookies["sessionToken"].value
 
@@ -555,7 +556,6 @@ class ConnectBox:
                 allow_redirects=False,
                 timeout=10,
             ) as response:
-
                 # If there is an error
                 if response.status != 200:
                     _LOGGER.debug("Receive HTTP code %d", response.status)
@@ -594,7 +594,6 @@ class ConnectBox:
                 allow_redirects=False,
                 timeout=10,
             ) as response:
-
                 # If there is an error
                 if response.status != 200:
                     _LOGGER.debug("Receive HTTP code %d", response.status)

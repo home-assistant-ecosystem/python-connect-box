@@ -1,0 +1,54 @@
+interactions:
+- request:
+    body: token=[SESSION_TOKEN]&fun=100
+    headers:
+      Referer:
+      - http://192.168.0.1/index.html
+      User-Agent:
+      - Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko)
+        Chrome/47.0.2526.106 Safari/537.36
+      X-Requested-With:
+      - XMLHttpRequest
+    method: POST
+    uri: http://192.168.0.1/xml/getter.xml
+  response:
+    body:
+      string: |
+        <?xml version="1.0" encoding="utf-8"?>
+        <LANSetting>
+          <UPnP>1</UPnP>
+          <LanMAC>38:43:7D:FF:FF:FF</LanMAC>
+          <LanIP>192.168.0.1</LanIP>
+          <DMZaddr>192.168.0.0</DMZaddr>
+          <DMZ>0</DMZ>
+          <LanIPv6>2a02:a317:2244:3400:3a43:7dff:fec9:603/64</LanIPv6>
+          <LanIPv6Prefix>2a02:a317:2244:3400::/64</LanIPv6Prefix>
+          <subnetmask>255.255.255.0</subnetmask>
+          <DHCP_startaddress>192.168.0.10</DHCP_startaddress>
+          <DHCP_endaddress>192.168.0.254</DHCP_endaddress>
+        </LANSetting>
+    headers:
+      Cache-Control:
+      - no-cache
+      Connection:
+      - close
+      Content-Type:
+      - text/xml
+      Date:
+      - Wed, 03 Jan 2024 18:39:46 GMT
+      Expires:
+      - '-1'
+      Last-Modified:
+      - Fri, 27 Aug 2021 01:46:26 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - NET-DK/1.0
+      Set-Cookie:
+      - sessionToken=[SESSION_TOKEN]; path=/;
+      X-Frame-Options:
+      - SAMEORIGIN
+    status:
+      code: 200
+      message: Ok
+version: 1

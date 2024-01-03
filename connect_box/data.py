@@ -1,6 +1,12 @@
 """Handle Data attributes."""
 from datetime import datetime
-from ipaddress import IPv4Address, IPv6Address, ip_address as convert_ip
+from ipaddress import (
+    IPv4Address,
+    IPv6Address,
+    IPv6Network,
+    ip_address as convert_ip,
+    ip_network as convert_ip_network,
+)
 from typing import Iterable, Optional, Union
 
 import attr
@@ -132,7 +138,7 @@ class LanStatus:
     upnp_enabled: bool = attr.ib()
     mac: str = attr.ib()
     ip4: IPv4Address = attr.ib(converter=convert_ip)
-    ip6: IPv6Address = attr.ib(converter=convert_ip)
+    ip6: IPv6Network = attr.ib(converter=lambda d: convert_ip_network(d, False))
 
 
 @attr.s

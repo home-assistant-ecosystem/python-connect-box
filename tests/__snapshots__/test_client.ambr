@@ -1,0 +1,71 @@
+# serializer version: 1
+# name: test_async_async_toggle_ipv6_filter
+  None
+# ---
+# name: test_async_get_devices
+  list([
+    Device(mac='00:01:02:03:04:05', hostname='unknown', ip=IPv4Address('192.168.0.31'), interface='Other', speed='1000', interface_id='1', method='1', lease_time=datetime.datetime(1900, 1, 1, 23, 56, 46)),
+    Device(mac='00:02:04:06:08:0A', hostname='MBP', ip=IPv4Address('192.168.0.129'), interface='UPC', speed='585', interface_id='19', method='1', lease_time=datetime.datetime(1900, 1, 1, 23, 59, 59)),
+  ])
+# ---
+# name: test_async_get_downstream
+  list([
+    DownstreamChannel(frequency=794000000, powerLevel=-3, modulation='256qam', id='24', snr=34.484, preRs=65471343180, postRs=6143480, qamLocked=True, fecLocked=True, mpegLocked=True),
+    DownstreamChannel(frequency=786000000, powerLevel=-5, modulation='256qam', id='23', snr=34.484, preRs=65476818580, postRs=670720, qamLocked=True, fecLocked=True, mpegLocked=True),
+    DownstreamChannel(frequency=778000000, powerLevel=-4, modulation='256qam', id='22', snr=34.926, preRs=65477054174, postRs=427162, qamLocked=True, fecLocked=True, mpegLocked=True),
+    DownstreamChannel(frequency=770000000, powerLevel=-3, modulation='256qam', id='21', snr=35.595, preRs=65477255647, postRs=232536, qamLocked=True, fecLocked=True, mpegLocked=True),
+    DownstreamChannel(frequency=762000000, powerLevel=-3, modulation='256qam', id='20', snr=35.78, preRs=65477318701, postRs=172105, qamLocked=True, fecLocked=True, mpegLocked=True),
+    DownstreamChannel(frequency=754000000, powerLevel=-4, modulation='256qam', id='19', snr=34.926, preRs=65477045764, postRs=438973, qamLocked=True, fecLocked=True, mpegLocked=True),
+    DownstreamChannel(frequency=746000000, powerLevel=-4, modulation='256qam', id='18', snr=34.346, preRs=65476479492, postRs=1011196, qamLocked=True, fecLocked=True, mpegLocked=True),
+    DownstreamChannel(frequency=738000000, powerLevel=-3, modulation='256qam', id='17', snr=35.595, preRs=65477333381, postRs=158466, qamLocked=True, fecLocked=True, mpegLocked=True),
+    DownstreamChannel(frequency=730000000, powerLevel=-3, modulation='256qam', id='16', snr=35.78, preRs=65477340289, postRs=144149, qamLocked=True, fecLocked=True, mpegLocked=True),
+    DownstreamChannel(frequency=722000000, powerLevel=-2, modulation='256qam', id='15', snr=36.61, preRs=65477440415, postRs=45309, qamLocked=True, fecLocked=True, mpegLocked=True),
+    DownstreamChannel(frequency=714000000, powerLevel=-2, modulation='256qam', id='14', snr=34.926, preRs=65476443083, postRs=1049850, qamLocked=True, fecLocked=True, mpegLocked=True),
+    DownstreamChannel(frequency=706000000, powerLevel=-2, modulation='256qam', id='13', snr=33.487, preRs=65470830487, postRs=6658966, qamLocked=True, fecLocked=True, mpegLocked=True),
+    DownstreamChannel(frequency=698000000, powerLevel=-2, modulation='256qam', id='12', snr=34.346, preRs=65477102100, postRs=391515, qamLocked=True, fecLocked=True, mpegLocked=True),
+    DownstreamChannel(frequency=690000000, powerLevel=0, modulation='256qam', id='11', snr=34.346, preRs=65447317243, postRs=30138988, qamLocked=True, fecLocked=True, mpegLocked=True),
+    DownstreamChannel(frequency=682000000, powerLevel=0, modulation='256qam', id='10', snr=36.387, preRs=65477467552, postRs=30148, qamLocked=True, fecLocked=True, mpegLocked=True),
+    DownstreamChannel(frequency=674000000, powerLevel=-1, modulation='256qam', id='9', snr=36.387, preRs=65477459255, postRs=31177, qamLocked=True, fecLocked=True, mpegLocked=True),
+    DownstreamChannel(frequency=666000000, powerLevel=0, modulation='256qam', id='8', snr=36.61, preRs=65477470925, postRs=25136, qamLocked=True, fecLocked=True, mpegLocked=True),
+    DownstreamChannel(frequency=658000000, powerLevel=0, modulation='256qam', id='7', snr=36.61, preRs=65477468243, postRs=27236, qamLocked=True, fecLocked=True, mpegLocked=True),
+    DownstreamChannel(frequency=650000000, powerLevel=0, modulation='256qam', id='6', snr=37.356, preRs=65477472275, postRs=24150, qamLocked=True, fecLocked=True, mpegLocked=True),
+    DownstreamChannel(frequency=642000000, powerLevel=2, modulation='256qam', id='5', snr=37.356, preRs=65477475289, postRs=21606, qamLocked=True, fecLocked=True, mpegLocked=True),
+    DownstreamChannel(frequency=634000000, powerLevel=1, modulation='256qam', id='4', snr=37.356, preRs=65477476542, postRs=20832, qamLocked=True, fecLocked=True, mpegLocked=True),
+    DownstreamChannel(frequency=626000000, powerLevel=2, modulation='256qam', id='3', snr=37.356, preRs=65477477890, postRs=19152, qamLocked=True, fecLocked=True, mpegLocked=True),
+    DownstreamChannel(frequency=610000000, powerLevel=2, modulation='256qam', id='1', snr=37.636, preRs=65477481554, postRs=16825, qamLocked=True, fecLocked=True, mpegLocked=True),
+    DownstreamChannel(frequency=618000000, powerLevel=2, modulation='256qam', id='2', snr=37.636, preRs=65478719484, postRs=17895, qamLocked=True, fecLocked=True, mpegLocked=True),
+  ])
+# ---
+# name: test_async_get_eventlog
+  list([
+    LogEvent(evPrio='notice', evMsg='Illegal\n        -  Dropped FORWARD packet: SRC=2a03:2880:f216:00c6:face:b00c:0000:7260 MAC=56:2B:76:F0:19:86;CM-MAC=38:43:7d:d1:ff:ff;CMTS-MAC=00:56:2b:76:ff:ff;CM-QOS=1.1;CM-VER=3.0;', evTime='03-01-2024\n        19:25:43', evEpoch=1704306343),
+  ])
+# ---
+# name: test_async_get_global_settings
+  GlobalSettings(logged_in=True, operator_id='[OPERATOR]', access_denied=False, sw_version=None)
+# ---
+# name: test_async_get_ipv6_filtering
+  list([
+  ])
+# ---
+# name: test_async_get_lanstatus
+  LanStatus(upnp_enabled=True, mac='38:43:7D:FF:FF:FF', ip4=IPv4Address('192.168.0.1'), ip6=IPv6Network('2a02:a317:2244:3400::/64'))
+# ---
+# name: test_async_get_temperature
+  Temperature(tunerTemperature=31.111111111111114, temperature=20.0)
+# ---
+# name: test_async_get_wanstatus
+  CmStatus(provisioningStatus='Online', cmComment='Operational', cmDocsisMode='DOCSIS\n        3.0', cmNetworkAccess='Allowed', firmwareFilename='CH7465LG_fiberpower008_v6.cfg', numberOfCpes=245, dMaxCpes=2, bpiEnable=1)
+# ---
+# name: test_async_get_wanstatus.1
+  list([
+    ServiceFlow(id=324, pMaxTrafficRate=768000000, pMaxTrafficBurst=42600, pMinReservedRate=0, pMaxConcatBurst=1522, pSchedulingType=1),
+    ServiceFlow(id=23569, pMaxTrafficRate=53000000, pMaxTrafficBurst=16320, pMinReservedRate=0, pMaxConcatBurst=1522, pSchedulingType=1),
+  ])
+# ---
+# name: test_async_get_wanstatus.2
+  list([
+    ServiceFlow(id=323, pMaxTrafficRate=40960000, pMaxTrafficBurst=42600, pMinReservedRate=0, pMaxConcatBurst=42600, pSchedulingType=2),
+    ServiceFlow(id=23568, pMaxTrafficRate=5300000, pMaxTrafficBurst=16320, pMinReservedRate=0, pMaxConcatBurst=16320, pSchedulingType=2),
+  ])
+# ---

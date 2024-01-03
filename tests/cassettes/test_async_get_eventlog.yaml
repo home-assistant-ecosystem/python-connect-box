@@ -1,0 +1,52 @@
+interactions:
+- request:
+    body: token=[SESSION_TOKEN]&fun=13
+    headers:
+      Referer:
+      - http://192.168.0.1/index.html
+      User-Agent:
+      - Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko)
+        Chrome/47.0.2526.106 Safari/537.36
+      X-Requested-With:
+      - XMLHttpRequest
+    method: POST
+    uri: http://192.168.0.1/xml/getter.xml
+  response:
+    body:
+      string: |
+        <?xml version="1.0" encoding="utf-8"?>
+        <eventlog_table>
+          <eventlog>
+            <prior>notice</prior>
+            <text>Illegal
+                -  Dropped FORWARD packet: SRC=2a03:2880:f216:00c6:face:b00c:0000:7260 MAC=56:2B:76:F0:19:86;CM-MAC=38:43:7d:d1:ff:ff;CMTS-MAC=00:56:2b:76:ff:ff;CM-QOS=1.1;CM-VER=3.0;</text>
+            <time>03-01-2024
+                19:25:43</time>
+            <t>1704306343</t>
+          </eventlog>
+        </eventlog_table>
+    headers:
+      Cache-Control:
+      - no-cache
+      Connection:
+      - close
+      Content-Type:
+      - text/xml
+      Date:
+      - Wed, 03 Jan 2024 18:39:52 GMT
+      Expires:
+      - '-1'
+      Last-Modified:
+      - Fri, 27 Aug 2021 01:46:26 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - NET-DK/1.0
+      Set-Cookie:
+      - sessionToken=[SESSION_TOKEN]; path=/;
+      X-Frame-Options:
+      - SAMEORIGIN
+    status:
+      code: 200
+      message: Ok
+version: 1

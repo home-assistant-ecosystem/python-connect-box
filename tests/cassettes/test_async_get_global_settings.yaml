@@ -1,0 +1,63 @@
+interactions:
+- request:
+    body: token=[SESSION_TOKEN]&fun=1
+    headers:
+      Referer:
+      - http://192.168.0.1/index.html
+      User-Agent:
+      - Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko)
+        Chrome/47.0.2526.106 Safari/537.36
+      X-Requested-With:
+      - XMLHttpRequest
+    method: POST
+    uri: http://192.168.0.1/xml/getter.xml
+  response:
+    body:
+      string: |
+        <?xml version="1.0" encoding="utf-8"?>
+        <GlobalSettings>
+          <AccessLevel>1</AccessLevel>
+          <SwVersion>CH7465LG-NCIP-6.15.31p1-NOSH</SwVersion>
+          <CmProvisionMode>IPv4</CmProvisionMode>
+          <DsLite>1</DsLite>
+          <GwProvisionMode>IPv6</GwProvisionMode>
+          <GWOperMode>IPv6</GWOperMode>
+          <ConfigVenderModel>CH7465LG</ConfigVenderModel>
+          <HideRemoteAccess>False</HideRemoteAccess>
+          <HideModemMode>True</HideModemMode>
+          <HideCustomerDhcpLanChange>1</HideCustomerDhcpLanChange>
+          <ShowDDNS>False</ShowDDNS>
+          <OperatorId>[OPERATOR]</OperatorId>
+          <AccessDenied>NONE</AccessDenied>
+          <LockedOut>Disable</LockedOut>
+          <CountryID>8</CountryID>
+          <title>Connect
+                Box</title>
+          <Interface>1</Interface>
+          <operStatus>1</operStatus>
+        </GlobalSettings>
+    headers:
+      Cache-Control:
+      - no-cache
+      Connection:
+      - close
+      Content-Type:
+      - text/xml
+      Date:
+      - Wed, 03 Jan 2024 18:39:58 GMT
+      Expires:
+      - '-1'
+      Last-Modified:
+      - Fri, 27 Aug 2021 01:46:26 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - NET-DK/1.0
+      Set-Cookie:
+      - sessionToken=[SESSION_TOKEN]; path=/;
+      X-Frame-Options:
+      - SAMEORIGIN
+    status:
+      code: 200
+      message: Ok
+version: 1
