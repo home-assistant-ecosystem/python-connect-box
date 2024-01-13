@@ -7,10 +7,6 @@ from connect_box import ConnectBox
 import os
 from vcr.record_mode import RecordMode
 
-import logging
-
-logging.basicConfig(level=logging.DEBUG)
-
 
 @pytest.fixture(scope="module")
 def vcr_config():

@@ -514,7 +514,6 @@ class ConnectBox:
                 headers=self.headers,
                 timeout=10,
             ) as response:
-
                 await response.read()
                 self.token = response.cookies["sessionToken"].value
 

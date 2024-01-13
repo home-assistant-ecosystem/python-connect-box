@@ -102,12 +102,14 @@ async def test_async_get_eventlog(client, vcr_recorder, snapshot):
 
     assert client.eventlog == snapshot
 
+
 @pytest.mark.asyncio
 async def test_async_reboot_device(client, vcr_recorder, snapshot):
     with vcr_recorder():
         await client.async_reboot_device()
 
     assert client.token == None
+
 
 @pytest.mark.asyncio
 async def test_async_close_session(client, vcr_recorder):
