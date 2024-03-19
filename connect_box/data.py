@@ -1,4 +1,5 @@
 """Handle Data attributes."""
+
 from datetime import datetime
 from ipaddress import (
     IPv4Address,

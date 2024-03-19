@@ -1,4 +1,5 @@
 """Get the data from an UPC Connect Box."""
+
 import asyncio
 from pprint import pprint
 
