@@ -27,7 +27,7 @@ setup(
     ],
     packages=["connect_box"],
     zip_safe=True,
-    python_requires=">=3.9",
+    python_requires=">=3.10",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Console",
