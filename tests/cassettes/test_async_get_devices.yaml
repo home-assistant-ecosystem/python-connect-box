@@ -1,0 +1,77 @@
+interactions:
+- request:
+    body: token=[SESSION_TOKEN]&fun=123
+    headers:
+      Referer:
+      - http://192.168.0.1/index.html
+      User-Agent:
+      - Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko)
+        Chrome/47.0.2526.106 Safari/537.36
+      X-Requested-With:
+      - XMLHttpRequest
+    method: POST
+    uri: http://192.168.0.1/xml/getter.xml
+  response:
+    body:
+      string: |
+        <?xml version="1.0" encoding="utf-8"?>
+        <LanUserTable>
+          <Ethernet>
+            <clientinfo>
+              <interface>Other</interface>
+              <IPv4Addr>192.168.0.31/24</IPv4Addr>
+              <xmlhostname/>
+              <xmlicon/>
+              <index>1</index>
+              <interfaceid>1</interfaceid>
+              <hostname>unknown</hostname>
+              <MACAddr>00:01:02:03:04:05</MACAddr>
+              <method>1</method>
+              <leaseTime>00:23:56:46</leaseTime>
+              <speed>1000</speed>
+            </clientinfo>
+          </Ethernet>
+          <WIFI>
+            <clientinfo>
+              <interface>UPC</interface>
+              <IPv4Addr>192.168.0.129/24</IPv4Addr>
+              <IPv6Addr>2a02:a317:2244:3400:b829:47c:3de1:7586</IPv6Addr>
+              <xmlhostname/>
+              <xmlicon/>
+              <index>0</index>
+              <interfaceid>19</interfaceid>
+              <hostname>MBP</hostname>
+              <MACAddr>00:02:04:06:08:0A</MACAddr>
+              <method>1</method>
+              <leaseTime>00:23:59:59</leaseTime>
+              <speed>585</speed>
+            </clientinfo>
+          </WIFI>
+          <totalClient>9</totalClient>
+          <Customer>upc</Customer>
+        </LanUserTable>
+    headers:
+      Cache-Control:
+      - no-cache
+      Connection:
+      - close
+      Content-Type:
+      - text/xml
+      Date:
+      - Wed, 03 Jan 2024 18:39:35 GMT
+      Expires:
+      - '-1'
+      Last-Modified:
+      - Fri, 27 Aug 2021 01:46:26 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - NET-DK/1.0
+      Set-Cookie:
+      - sessionToken=[SESSION_TOKEN]; path=/;
+      X-Frame-Options:
+      - SAMEORIGIN
+    status:
+      code: 200
+      message: Ok
+version: 1

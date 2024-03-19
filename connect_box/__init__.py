@@ -555,7 +555,6 @@ class ConnectBox:
                 allow_redirects=False,
                 timeout=10,
             ) as response:
-
                 # If there is an error
                 if response.status != 200:
                     _LOGGER.debug("Receive HTTP code %d", response.status)
@@ -594,7 +593,6 @@ class ConnectBox:
                 allow_redirects=False,
                 timeout=10,
             ) as response:
-
                 # If there is an error
                 if response.status != 200:
                     _LOGGER.debug("Receive HTTP code %d", response.status)
