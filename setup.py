@@ -27,7 +27,7 @@ setup(
     ],
     packages=["connect_box"],
     zip_safe=True,
-    python_requires=">=3.10",
+    python_requires=">=3.13",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Console",
@@ -36,9 +36,8 @@ setup(
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: Microsoft :: Windows",
         "Operating System :: POSIX",
-        "Programming Language :: Python :: 3.10",
-        "Programming Language :: Python :: 3.11",
-        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
         "Topic :: Utilities",
     ],
 )
