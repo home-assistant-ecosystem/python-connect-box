@@ -1,3 +1,10 @@
+This module is no longer maintained. Newer hardware revision have a RESTful API
+interface.
+
+Please use https://github.com/home-assistant-ecosystem/python-connect-box3
+
+-------------------------------------------------------------------------------
+
 python-connect-box
 ==================
 
