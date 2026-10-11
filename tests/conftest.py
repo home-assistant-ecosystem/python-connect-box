@@ -58,7 +58,6 @@ async def device_password(vcr):
 
 
 @pytest.fixture
-@pytest.mark.asyncio
 async def client(vcr, device_password):
     async with aiohttp.ClientSession() as session:
         client = ConnectBox(session, device_password)

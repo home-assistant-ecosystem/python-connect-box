@@ -82,6 +82,24 @@ For development is recommended to use a ``venv``.
     $ source bin/activate
     $ python setup.py develop
 
+Running the tests
+-----------------
+
+Install the package with the test dependencies and run ``pytest`` from the
+root of the repository.
+
+.. code:: bash
+
+    $ pip3 install -e ".[test]"
+    $ pytest
+
+On Nix or NixOS, ``shell.nix`` provides an environment with all test
+dependencies.
+
+.. code:: bash
+
+    $ nix-shell --run pytest
+
 License
 -------
 
